@@ -1,0 +1,10 @@
+<odoo>
+  <data>
+    <menuitem
+            name="RMI Configuration"
+            id="rmi_survey_root_menu"
+            parent="survey.menu_surveys"
+            sequence="150"
+        />
+  </data>
+</odoo>
