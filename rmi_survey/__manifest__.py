@@ -26,6 +26,8 @@
     'data': [
         'security/ir.model.access.csv',
         'views/views.xml',
-        'views/aspek_kinerja.xml'
+        'views/aspek_kinerja.xml',
+        'views/final_rating.xml',
+        'views/komposit_risiko.xml'
     ]
 }

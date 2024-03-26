@@ -9,7 +9,7 @@
         </record>
     </data>
     <record id="aspek_kinerja_view_form" model="ir.ui.view">
-        <field name="name">From Aspek Kinerja</field>
+        <field name="name">Form Aspek Kinerja</field>
         <field name="model">rmi.aspek_kinerja</field>
         <field name="arch" type="xml">
             <form>
@@ -35,8 +35,8 @@
         </field>
     </record>
     <menuitem
-            id="aspek_kinerja_menu_act"
             name="Aspek Kinerja"
+            id="rmi_survey_aspek_kinerja"
             parent="rmi_survey_root_menu"
             action="aspek_kinerja_action"
             sequence="1"
