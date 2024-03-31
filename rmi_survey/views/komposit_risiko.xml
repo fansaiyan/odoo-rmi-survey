@@ -37,6 +37,6 @@
             name="Komposit Risko"
             parent="rmi_survey_master_data_menu"
             action="komposit_risiko_menu_act"
-            sequence="2"
+            sequence="4"
     />
 </odoo>

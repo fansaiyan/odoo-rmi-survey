@@ -27,6 +27,8 @@
         'security/ir.model.access.csv',
         'views/views.xml',
         'views/aspek_kinerja.xml',
+        'views/param_dimensi.xml',
+        'views/param_group.xml',
         'views/final_rating.xml',
         'views/komposit_risiko.xml'
     ]
