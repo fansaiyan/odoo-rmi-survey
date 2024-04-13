@@ -8,6 +8,25 @@
         <field name="arch" type="xml">
             <xpath expr="//group/group/field[@name='user_id']" position="after">
                 <field name="jenis_industri"/>
+                <field name="periode"/>
+            </xpath>
+            <xpath expr="//button[@name='action_archive']" position="after">
+                <button name="generate_adjust_aspect_dimension" string="Calculation" type="object" attrs="{'invisible': [('answer_done_count', '&lt;=', 0)]}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Inherit Tree View Survey to Modify it -->
+    <record id="view_tree_survey_inherit" model="ir.ui.view">
+        <field name="name">view.tree.survey.inherit</field>
+        <field name="model">survey.survey</field>
+        <field name="inherit_id" ref="survey.survey_survey_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//tree/field[@name='success_ratio']" position="attributes">
+                <attribute name="optional">hide</attribute>
+            </xpath>
+            <xpath expr="//tree/field[@name='answer_score_avg']" position="attributes">
+                <attribute name="optional">hide</attribute>
             </xpath>
         </field>
     </record>
@@ -21,6 +40,21 @@
             <xpath expr="//group/group/field[@name='question_type']" position="after">
                 <field name="dimensi_names"/>
                 <field name="sub_dimensi_names"/>
+            </xpath>
+            <xpath expr="//notebook/page[@name='options']" position="after">
+                <page
+                    string="Bukti Dokumen"
+                    name="document_evidences"
+                    groups="rmi_survey.group_rmi_survey_user,rmi_survey.group_rmi_survey_admin"
+                >
+                    <field name="document_ids">
+                        <tree>
+                            <field name="name" />
+                            <field name="files" />
+                            <field name="survey_ids" invisible="1" />
+                        </tree>
+                    </field>
+                </page>
             </xpath>
         </field>
     </record>

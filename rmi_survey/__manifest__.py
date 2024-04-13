@@ -29,6 +29,7 @@
         'data/rmi.param_dimensi.csv',
         'data/rmi.param_group.csv',
         'security/ir.model.access.csv',
+        'security/security.xml',
         'views/views.xml',
         'views/aspek_kinerja.xml',
         'views/param_dimensi.xml',
@@ -36,6 +37,7 @@
         'views/final_rating.xml',
         'views/komposit_risiko.xml',
         'views/survey_inherit_view.xml',
-        'views/res_branch_view.xml'
+        'views/res_branch_view.xml',
+        'views/dashboard.xml'
     ]
 }
