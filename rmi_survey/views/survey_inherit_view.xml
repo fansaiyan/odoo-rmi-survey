@@ -8,10 +8,14 @@
         <field name="arch" type="xml">
             <xpath expr="//group/group/field[@name='user_id']" position="after">
                 <field name="jenis_industri"/>
+                <field name="company_id"/>
                 <field name="periode"/>
             </xpath>
             <xpath expr="//button[@name='action_archive']" position="after">
                 <button name="generate_adjust_aspect_dimension" string="Calculation" type="object" attrs="{'invisible': [('answer_done_count', '&lt;=', 0)]}"/>
+            </xpath>
+            <xpath expr="//button[@name='generate_adjust_aspect_dimension']" position="after">
+                <button name="generate_graph" string="Graph" type="object" attrs="{'invisible': [('answer_done_count', '&lt;=', 0)]}"/>
             </xpath>
         </field>
     </record>
@@ -50,7 +54,7 @@
                     <field name="document_ids">
                         <tree>
                             <field name="name" />
-                            <field name="files" />
+                            <field name="link_url" />
                             <field name="survey_ids" invisible="1" />
                         </tree>
                     </field>
