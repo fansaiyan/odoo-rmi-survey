@@ -5,7 +5,7 @@ from odoo.exceptions import AccessDenied
 
 class CustomAPIController(http.Controller):
 
-    @http.route('/custom_api/login', type='http', auth="none", methods=['POST'], csrf=False)
+    @http.route('/custom_api/login', type='http', auth="public", methods=['POST'], csrf=False)
     def login(self, **kwargs):
         username = kwargs.get('username')
         password = kwargs.get('password')
