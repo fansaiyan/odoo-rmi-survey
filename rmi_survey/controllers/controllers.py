@@ -1,21 +1,20 @@
-# -*- coding: utf-8 -*-
-# from odoo import http
+from odoo import http
+from odoo.http import request
+from odoo.exceptions import AccessDenied
 
 
-# class RmiSurvey(http.Controller):
-#     @http.route('/rmi_survey/rmi_survey', auth='public')
-#     def index(self, **kw):
-#         return "Hello, world"
+class CustomAPIController(http.Controller):
 
-#     @http.route('/rmi_survey/rmi_survey/objects', auth='public')
-#     def list(self, **kw):
-#         return http.request.render('rmi_survey.listing', {
-#             'root': '/rmi_survey/rmi_survey',
-#             'objects': http.request.env['rmi_survey.rmi_survey'].search([]),
-#         })
+    @http.route('/custom_api/login', type='http', auth="none", methods=['POST'], csrf=False)
+    def login(self, **kwargs):
+        username = kwargs.get('username')
+        password = kwargs.get('password')
 
-#     @http.route('/rmi_survey/rmi_survey/objects/<model("rmi_survey.rmi_survey"):obj>', auth='public')
-#     def object(self, obj, **kw):
-#         return http.request.render('rmi_survey.object', {
-#             'object': obj
-#         })
+        if not username or not password:
+            return http.Response('Username and password are required.', status=400)
+
+        uid = request.session.authenticate(request.db, username, password)
+        if not uid:
+            raise AccessDenied()
+
+        return http.Response('Login successful! User ID: {}'.format(uid))
