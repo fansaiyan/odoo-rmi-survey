@@ -5,7 +5,7 @@ from odoo.http import request, Response
 import json
 class CustomAPIController(http.Controller):
 
-    @http.route('/custom_api/login', website=False, auth='public', type="http", csrf=False, methods=['POST'])
+    @http.route('/custom_api/login', type='http', auth="none", methods=['POST'], csrf=False)
     def login(self, **kwargs):
         username = kwargs.get('username')
         password = kwargs.get('password')
@@ -15,7 +15,7 @@ class CustomAPIController(http.Controller):
 
         uid = request.session.authenticate(request.db, username, password)
         if not uid:
-            raise AccessDenied()
+            return http.Response('Invalid username or password.', status=401)
 
         return http.Response('Login successful! User ID: {}'.format(uid))
 
