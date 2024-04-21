@@ -36,7 +36,7 @@ class AspekKinerja(models.Model):
     score_adjustment = fields.Float(string="Penyesuain Skor", readonly=True)
     survey_ids = fields.Many2one('survey.survey', string="Survey")
     periode = fields.Char(string="Periode", readonly=True, related='survey_ids.periode')
-    jenis_industri = fields.Selection(string="Jenis Industri", readonly=True, related='survey_ids.jenis_industri')
+    # jenis_industri = fields.Selection(string="Jenis Industri", readonly=True, related='survey_ids.jenis_industri')
     state = fields.Selection([
                  ('new', 'New'),
                  ('done', 'Done'),
