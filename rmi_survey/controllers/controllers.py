@@ -111,12 +111,16 @@ class CustomAPIController(http.Controller):
     def _get_survey_list(self, **kwargs):
         data = []
         query = """
-            select
+             select
                 s.id,
-                (s.title->>'en_US')::varchar AS nama,
+                (s.title->>'en_US')::varchar AS name,
                 s.user_id,
-                s.company_id
+                s.company_id,
+                s.periode,
+                s.jenis_industri,
+                c.name as company_name
                 from survey_survey as s
+                left join res_company as c on c.id = s.company_id
         """
         http.request.env.cr.execute(query)
         fetched_data = http.request.env.cr.fetchall()
@@ -127,7 +131,12 @@ class CustomAPIController(http.Controller):
                 if isinstance(value, datetime):
                     row_dict[key] = str(value)
             data.append(row_dict)
-        headers = {'Content-Type': 'application/json'}
+        origin = http.request.httprequest.headers.get('Origin')
+        headers = {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': origin,
+            'Access-Control-Allow-Credentials': 'true'
+        }
         body = {'status': 200, 'message': 'OK', 'data': data}
         return Response(json.dumps(body), headers=headers)
     @http.route('/api/adjust-aspek-dimensi', website=False, auth='public', type="http", csrf=False, methods=['GET'])
@@ -136,7 +145,12 @@ class CustomAPIController(http.Controller):
         data = []
         body = {}
         statusCode = 200
-        headers = {'Content-Type': 'application/json'}
+        origin = http.request.httprequest.headers.get('Origin')
+        headers = {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': origin,
+            'Access-Control-Allow-Credentials': 'true'
+        }
         if not survey_id:
             statusCode = 400
             body = {
@@ -148,6 +162,8 @@ class CustomAPIController(http.Controller):
             query = """
                       select
                         ROW_NUMBER() OVER () AS no,
+                        (ss.title->>'en_US')::varchar AS survey_name,
+                        a.survey_id,
                         h.name as company,
                         a.question_id as question_id,
                         i.name as dimensi,
@@ -167,8 +183,9 @@ class CustomAPIController(http.Controller):
                         left join res_company as h on h.id = g.company_id
                         left join rmi_param_dimensi as i on i.id = b.dimensi_names
                         left join rmi_param_group as j on j.id = b.sub_dimensi_names
+                        left join survey_survey as ss on ss.id = a.survey_id
                     where a.survey_id = {} and c.state = 'done'
-                    GROUP BY a.question_id, parameterName, company, i.name, j.name
+                    GROUP BY a.question_id, parameterName, company, i.name, j.name, survey_name, a.survey_id
                     ORDER BY a.question_id ASC
                    """.format(survey_id)
             http.request.env.cr.execute(query)
@@ -199,7 +216,12 @@ class CustomAPIController(http.Controller):
         data = []
         body = {}
         statusCode = 200
-        headers = {'Content-Type': 'application/json'}
+        origin = http.request.httprequest.headers.get('Origin')
+        headers = {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': origin,
+            'Access-Control-Allow-Credentials': 'true'
+        }
         if not survey_id or not question_id:
             statusCode = 400
             body = {
@@ -254,7 +276,12 @@ class CustomAPIController(http.Controller):
         data = []
         body = {}
         statusCode = 200
-        headers = {'Content-Type': 'application/json'}
+        origin = http.request.httprequest.headers.get('Origin')
+        headers = {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': origin,
+            'Access-Control-Allow-Credentials': 'true'
+        }
         if not survey_id:
             statusCode = 400
             body = {
