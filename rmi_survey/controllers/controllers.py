@@ -2,12 +2,111 @@ from odoo import http
 from odoo.http import request, Response
 import json
 import io
+from datetime import datetime
+
 class CustomAPIController(http.Controller):
-    @http.route('/web/session/authenticate', type='json', auth="none")
+    @http.route('/web/session/authenticate', type='json', auth="none", cors="*")
     def authenticate(self, db, login, password, base_location=None):
         request.session.authenticate(db, login, password)
         return request.env['ir.http'].session_info()
 
+    @http.route('/api/parameter-dimensi', website=False, auth='public', type="http", csrf=False, methods=['GET'])
+    def _get_parameter_dimensi(self, **kwargs):
+        data = []
+        query = """
+                select * from rmi_param_dimensi
+            """
+        http.request.env.cr.execute(query)
+        fetched_data = http.request.env.cr.fetchall()
+        column_names = [desc[0] for desc in http.request.env.cr.description]
+        for row in fetched_data:
+            row_dict = dict(zip(column_names, row))
+            for key, value in row_dict.items():
+                if isinstance(value, datetime):
+                    row_dict[key] = str(value)
+            data.append(row_dict)
+        origin = http.request.httprequest.headers.get('Origin')
+        headers = {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': origin,
+            'Access-Control-Allow-Credentials': 'true'
+        }
+        body = {'status': 200, 'message': 'OK', 'data': data}
+        return Response(json.dumps(body), headers=headers)
+
+    @http.route('/api/parameter-group', website=False, auth='public', type="http", csrf=False, methods=['GET'])
+    def _get_parameter_group(self, **kwargs):
+        data = []
+        query = """
+                   select g.*, d.id as dimensi_id, d.name as dimensi_name
+                    from rmi_param_group as g
+                    left join rmi_param_dimensi as d on d.id = g.param_dimensi
+                """
+        http.request.env.cr.execute(query)
+        fetched_data = http.request.env.cr.fetchall()
+        column_names = [desc[0] for desc in http.request.env.cr.description]
+        for row in fetched_data:
+            row_dict = dict(zip(column_names, row))
+            for key, value in row_dict.items():
+                if isinstance(value, datetime):
+                    row_dict[key] = str(value)
+            data.append(row_dict)
+        origin = http.request.httprequest.headers.get('Origin')
+        headers = {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': origin,
+            'Access-Control-Allow-Credentials': 'true'
+        }
+        body = {'status': 200, 'message': 'OK', 'data': data}
+        return Response(json.dumps(body), headers=headers)
+
+    @http.route('/api/final-rating', website=False, auth='public', type="http", csrf=False, methods=['GET'])
+    def _get_final_rating(self, **kwargs):
+        data = []
+        query = """
+                        select * from rmi_final_rating
+                    """
+        http.request.env.cr.execute(query)
+        fetched_data = http.request.env.cr.fetchall()
+        column_names = [desc[0] for desc in http.request.env.cr.description]
+        for row in fetched_data:
+            row_dict = dict(zip(column_names, row))
+            for key, value in row_dict.items():
+                if isinstance(value, datetime):
+                    row_dict[key] = str(value)
+            data.append(row_dict)
+        origin = http.request.httprequest.headers.get('Origin')
+        headers = {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': origin,
+            'Access-Control-Allow-Credentials': 'true'
+        }
+        body = {'status': 200, 'message': 'OK', 'data': data}
+        return Response(json.dumps(body), headers=headers)
+
+    @http.route('/api/komposit-resiko', website=False, auth='public', type="http", csrf=False, methods=['GET'])
+    def _get_komposite_resiko(self, **kwargs):
+        data = []
+        query = """
+                           select * from rmi_komposit_risiko
+                       """
+        http.request.env.cr.execute(query)
+        fetched_data = http.request.env.cr.fetchall()
+        column_names = [desc[0] for desc in http.request.env.cr.description]
+        for row in fetched_data:
+            row_dict = dict(zip(column_names, row))
+            for key, value in row_dict.items():
+                if isinstance(value, datetime):
+                    row_dict[key] = str(value)
+            data.append(row_dict)
+        origin = http.request.httprequest.headers.get('Origin')
+        headers = {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': origin,
+            'Access-Control-Allow-Credentials': 'true'
+        }
+        body = {'status': 200, 'message': 'OK', 'data': data}
+        return Response(json.dumps(body), headers=headers)
     @http.route('/api/survey-list', website=False, auth='public', type="http", csrf=False, methods=['GET'])
     def _get_survey_list(self, **kwargs):
         data = []
@@ -24,6 +123,9 @@ class CustomAPIController(http.Controller):
         column_names = [desc[0] for desc in http.request.env.cr.description]
         for row in fetched_data:
             row_dict = dict(zip(column_names, row))
+            for key, value in row_dict.items():
+                if isinstance(value, datetime):
+                    row_dict[key] = str(value)
             data.append(row_dict)
         headers = {'Content-Type': 'application/json'}
         body = {'status': 200, 'message': 'OK', 'data': data}
@@ -74,6 +176,9 @@ class CustomAPIController(http.Controller):
             column_names = [desc[0] for desc in http.request.env.cr.description]
             for row in fetched_data:
                 row_dict = dict(zip(column_names, row))
+                for key, value in row_dict.items():
+                    if isinstance(value, datetime):
+                        row_dict[key] = str(value)
                 data.append(row_dict)
             body = {'status': True, 'message': 'OK', 'data': data}
             statusCode = 200
@@ -128,6 +233,9 @@ class CustomAPIController(http.Controller):
             column_names = [desc[0] for desc in http.request.env.cr.description]
             for row in fetched_data:
                 row_dict = dict(zip(column_names, row))
+                for key, value in row_dict.items():
+                    if isinstance(value, datetime):
+                        row_dict[key] = str(value)
                 data.append(row_dict)
             body = {'status': True, 'message': 'OK', 'data': data}
             statusCode = 200
@@ -183,6 +291,9 @@ class CustomAPIController(http.Controller):
             column_names = [desc[0] for desc in http.request.env.cr.description]
             for row in fetched_data:
                 row_dict = dict(zip(column_names, row))
+                for key, value in row_dict.items():
+                    if isinstance(value, datetime):
+                        row_dict[key] = str(value)
                 data.append(row_dict)
             body = {'status': True, 'message': 'OK', 'data': data}
             statusCode = 200
