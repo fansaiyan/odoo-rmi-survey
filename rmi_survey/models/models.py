@@ -10,7 +10,7 @@ class SurveyInherit(models.Model):
     """inherited survey model"""
     _inherit = 'survey.survey'
 
-    jenis_industri = fields.Selection([],
+    jenis_industri = fields.Selection([('Umum', 'Umum'), ('Perbankan', 'Perbankan'), ('Asuransi', 'Asuransi')],
                                       'Jenis Industri')
     periode = fields.Char(string='Periode')
     dashboard_id = fields.Many2one('rmi.survey_dashboard_aspect_dimension', string='Dashboard')
