@@ -7,7 +7,7 @@
         <field name="inherit_id" ref="survey.survey_survey_view_form"/>
         <field name="arch" type="xml">
             <xpath expr="//group/group/field[@name='user_id']" position="after">
-                <field name="jenis_industri"/>
+<!--                <field name="jenis_industri"/>-->
                 <field name="company_id"/>
                 <field name="periode"/>
             </xpath>
