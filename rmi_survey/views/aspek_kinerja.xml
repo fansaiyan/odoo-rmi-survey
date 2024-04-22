@@ -47,23 +47,30 @@
                             <field name="company_name" placeholder="e.g. PT. ABC"/>
                         </h1>
                     </div>
+                    <group>
+                        <field name="name" string="Name"/>
+                    </group>
                     <group string="Pilih Survey">
                         <field name="survey_ids" string="Survey"/>
                     </group>
-                    <group string="Input Aspek Kinerja">
+                    <group string="Input Aspek Kinerja" col="4">
                         <group>
                             <field name="aspect_values" options="{'no_create': True}"/>
                             <field name="composite_risk_levels" options="{'no_create': True}"/>
-                            <field name="final_rating_weight" string="Bobot (%)"/>
-                            <field name="conversion_rating_value" string="Nilai Konversi x Bobot"/>
                             <field name="total_rating_value" string="Total Nilai"/>
+                            <field name="score_adjustment" string="Penyesuain Skor"/>
                         </group>
                         <group>
                             <field name="aspect_conversion_value"/>
                             <field name="composite_risk_conversion_value"/>
+                        </group>
+                        <group>
+                            <field name="final_rating_weight" string="Bobot (%)"/>
                             <field name="composite_risk_weight" string="Bobot (%)"/>
+                        </group>
+                        <group>
+                            <field name="conversion_rating_value" string="Nilai Konversi x Bobot"/>
                             <field name="conversion_risk_value" string="Nilai Konversi x Bobot"/>
-                            <field name="score_adjustment" string="Penyesuain Skor"/>
                         </group>
                     </group>
                 </sheet>
@@ -75,6 +82,7 @@
         <field name="model">rmi.aspek_kinerja</field>
         <field name="arch" type="xml">
             <tree>
+                <field name="name" optional="show"/>
                 <field name="survey_ids" optional="show"/>
                 <field name="aspect_values" optional="show"/>
                 <field name="composite_risk_levels" optional="show"/>
