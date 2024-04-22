@@ -139,7 +139,40 @@ class CustomAPIController(http.Controller):
         }
         body = {'status': 200, 'message': 'OK', 'data': data}
         return Response(json.dumps(body), headers=headers)
-    @http.route('/api/adjust-aspek-dimensi', website=False, auth='public', type="http", csrf=False, methods=['GET'])
+
+    @http.route('/api/aspek-kinerja-list', website=False, auth='public', type="http", csrf=False, methods=['GET'])
+    def _get_aspek_kinerja_list(self, **kwargs):
+        data = []
+        query = """
+                 select
+                    ROW_NUMBER() OVER () AS no,
+                    a.*,
+                    (b.title ->>'en_US')::varchar AS survey_name,
+                    b.periode,
+                    b.jenis_industri,
+                    c.name as company_name
+                from rmi_aspek_kinerja as a
+                left join survey_survey as b on b.id = a.survey_ids
+                left join res_company as c on c.id = b.company_id
+            """
+        http.request.env.cr.execute(query)
+        fetched_data = http.request.env.cr.fetchall()
+        column_names = [desc[0] for desc in http.request.env.cr.description]
+        for row in fetched_data:
+            row_dict = dict(zip(column_names, row))
+            for key, value in row_dict.items():
+                if isinstance(value, datetime):
+                    row_dict[key] = str(value)
+            data.append(row_dict)
+        origin = http.request.httprequest.headers.get('Origin')
+        headers = {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': origin,
+            'Access-Control-Allow-Credentials': 'true'
+        }
+        body = {'status': 200, 'message': 'OK', 'data': data}
+        return Response(json.dumps(body), headers=headers)
+    @http.route('/api/report/adjust-aspek-dimensi', website=False, auth='public', type="http", csrf=False, methods=['GET'])
     def _adjust_aspek_dimensi(self, **kwargs):
         survey_id = kwargs.get('survey_id', None)
         data = []
@@ -209,7 +242,7 @@ class CustomAPIController(http.Controller):
             statusCode = 500
         return Response(json.dumps(body), headers=headers, status=statusCode)
 
-    @http.route('/api/adjust-aspek-dimensi-detail', website=False, auth='public', type="http", csrf=False, methods=['GET'])
+    @http.route('/api/report/adjust-aspek-dimensi-detail', website=False, auth='public', type="http", csrf=False, methods=['GET'])
     def _adjust_aspek_dimensi_detail(self, **kwargs):
         survey_id = kwargs.get('survey_id', None)
         question_id = kwargs.get('question_id', None)
@@ -339,6 +372,7 @@ class CustomAPIController(http.Controller):
         survey_id = kwargs.get('survey_id', None)
         aspek_id = kwargs.get('aspek_id', None)
         data = {
+            "summary": [],
             "dimensi": [],
             'kinerja': []
         }
@@ -358,6 +392,26 @@ class CustomAPIController(http.Controller):
             }
             return Response(json.dumps(body), headers=headers, status=statusCode)
         try:
+            query_summary = """
+                select
+                    c.name as company,
+                    b.periode,
+                    a.no_laporan,
+                    b.jenis_industri
+                from rmi_aspek_kinerja as a
+                left join survey_survey as b on b.id = a.survey_ids
+                left join res_company as c on c.id = b.company_id
+                where a.id = {} and a.survey_ids = {}
+                   """.format(aspek_id, survey_id)
+            http.request.env.cr.execute(query_summary)
+            fetched_data_summary = http.request.env.cr.fetchall()
+            column_names_summary = [desc[0] for desc in http.request.env.cr.description]
+            for row in fetched_data_summary:
+                row_dict = dict(zip(column_names_summary, row))
+                for key, value in row_dict.items():
+                    if isinstance(value, datetime):
+                        row_dict[key] = str(value)
+                data['summary'].append(row_dict)
             query_dimensi = """
                           select
                             CASE
@@ -390,7 +444,6 @@ class CustomAPIController(http.Controller):
                     if isinstance(value, datetime):
                         row_dict[key] = str(value)
                 data['dimensi'].append(row_dict)
-
             query_kinerja = """
                       WITH CombinedData AS (
                         select
