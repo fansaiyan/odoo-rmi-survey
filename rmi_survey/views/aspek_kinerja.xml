@@ -44,7 +44,7 @@
                 <sheet>
                     <div class="oe_title">
                         <h1>
-                            <field name="company_name" placeholder="e.g. PT. ABC"/>
+                            <field name="company_name_display" placeholder="e.g. PT. ABC"/>
                         </h1>
                     </div>
                     <group>

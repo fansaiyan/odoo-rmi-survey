@@ -10,7 +10,8 @@ class AspekKinerja(models.Model):
     name = fields.Char(string="Aspek")
     aspect_values = fields.Many2one('rmi.final_rating', string="Final Rating", required=True)
     composite_risk_levels = fields.Many2one('rmi.komposit_risiko', string="Peringkat Komposit Risiko", required=True)
-    company_name = fields.Char(string="Company", compute="_compute_company_name", readonly=True)
+    company_name_display = fields.Char(string="Company", compute="_compute_company_name", readonly=True)
+    company_name = fields.Char(string="Company")
     aspect_conversion_value = fields.Integer(string="Nilai Konversi", readonly=True, compute="_compute_final_rating")
     composite_risk_conversion_value = fields.Integer(
         string="Nilai Konversi",
@@ -158,10 +159,11 @@ class AspekKinerja(models.Model):
             record.total_rating_value = record.conversion_rating_value + record.conversion_risk_value
             self.calculate_score_adjustment(record.total_rating_value)
 
-    @api.depends('aspect_values')
+    @api.onchange('survey_ids')
     def _compute_company_name(self):
         for record in self:
-            record.company_name = self.env.user.company_id.display_name
+            record.company_name_display = record.survey_ids.company_id.name
+            record.company_name = record.survey_ids.company_id.name
 
     @api.depends('total_rating_value')
     def calculate_score_adjustment(self, total_rating_value):

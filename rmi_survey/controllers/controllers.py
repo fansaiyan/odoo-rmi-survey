@@ -299,7 +299,7 @@ class CustomAPIController(http.Controller):
                             WHEN f.name = 'Proses dan Kontrol Risiko' THEN '34 s.d. 39'
                             ELSE '40 s.d. 42'
                         END as parameter,
-                        ROW_NUMBER() OVER () AS dimensi,
+                        f.param_dimensi_id AS dimensi,
                         f.name as deskripsi,
                         TRUNC(avg((e.value->>'en_US')::int) * 10) / 10.0 AS skordimensi
                         from survey_user_input_line as a
@@ -322,6 +322,113 @@ class CustomAPIController(http.Controller):
                     if isinstance(value, datetime):
                         row_dict[key] = str(value)
                 data.append(row_dict)
+            body = {'status': True, 'message': 'OK', 'data': data}
+            statusCode = 200
+        except Exception as e:
+            errorMsg = f"An error occurred: {e}"
+            body = {
+                'status': False,
+                'message': errorMsg,
+                'execution_time': '0s'
+            }
+            statusCode = 500
+        return Response(json.dumps(body), headers=headers, status=statusCode)
+
+    @http.route('/api/report/hasil-penilaian-rmi', website=False, auth='public', type="http", csrf=False, methods=['GET'])
+    def _report_hasil_penilaian_rmi(self, **kwargs):
+        survey_id = kwargs.get('survey_id', None)
+        aspek_id = kwargs.get('aspek_id', None)
+        data = {
+            "dimensi": [],
+            'kinerja': []
+        }
+        body = {}
+        statusCode = 200
+        origin = http.request.httprequest.headers.get('Origin')
+        headers = {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': origin,
+            'Access-Control-Allow-Credentials': 'true'
+        }
+        if not survey_id:
+            statusCode = 400
+            body = {
+                'status': False,
+                'message': 'Required parameter "survey_id" is missing'
+            }
+            return Response(json.dumps(body), headers=headers, status=statusCode)
+        try:
+            query_dimensi = """
+                          select
+                            CASE
+                                WHEN f.name = 'Budaya dan Kapabilitas Risiko' THEN '1 s.d. 3'
+                                WHEN f.name = 'Organisasi dan Tata Kelola Risiko' THEN '4 s.d. 19'
+                                WHEN f.name = 'Kerangka Risiko dan Kepatuhan' THEN '20 s.d. 33'
+                                WHEN f.name = 'Proses dan Kontrol Risiko' THEN '34 s.d. 39'
+                                ELSE '40 s.d. 42'
+                            END as parameter,
+                            f.param_dimensi_id AS dimensi,
+                            f.name as deskripsi,
+                            TRUNC(avg((e.value->>'en_US')::int) * 10) / 10.0 AS skordimensi
+                            from survey_user_input_line as a
+                            left join survey_question as b on a.question_id = b.id
+                            left join survey_user_input as c on c.id = a.user_input_id
+                            left join res_partner as d on d.id = c.partner_id
+                            left join survey_question_answer as e on e.id = a.suggested_answer_id
+                            left join rmi_param_dimensi as f on f.id = b.dimensi_names
+                            left join rmi_param_group as g on g.id = b.sub_dimensi_names
+                        where a.survey_id = {}
+                        group by f.name, f.id
+                        order by f.id asc
+                       """.format(survey_id)
+            http.request.env.cr.execute(query_dimensi)
+            fetched_data_dimensi = http.request.env.cr.fetchall()
+            column_names_dimensi = [desc[0] for desc in http.request.env.cr.description]
+            for row in fetched_data_dimensi:
+                row_dict = dict(zip(column_names_dimensi, row))
+                for key, value in row_dict.items():
+                    if isinstance(value, datetime):
+                        row_dict[key] = str(value)
+                data['dimensi'].append(row_dict)
+
+            query_kinerja = """
+                      WITH CombinedData AS (
+                        select
+                            a.id as aspek_id,
+                            'Tingkat Kesehatan Peringkat' as aspek,
+                            fr.name as nilai_aspek,
+                            fr.nilai as nilai_konversi_aspek,
+                            a.final_rating_weight as bobot,
+                            ROUND((fr.nilai * a.final_rating_weight) / 100::NUMERIC, 1) as nilai_konversi,
+                            a.survey_ids
+                            from rmi_aspek_kinerja as a
+                            left join rmi_final_rating as fr on fr.id = a.aspect_values
+                        UNION ALL
+                        select
+                            a.id as aspek_id,
+                            'Peringkat Komposit Resiko' as aspek,
+                            kr.name as nilai_aspek,
+                            kr.nilai as nilai_konversi_aspek,
+                            a.composite_risk_weight as bobot,
+                            ROUND((kr.nilai * a.composite_risk_weight) / 100::NUMERIC, 1) as nilai_konversi,
+                            a.survey_ids
+                            from rmi_aspek_kinerja as a
+                            left join rmi_komposit_risiko as kr on kr.id = a.composite_risk_levels
+                    )
+                    SELECT
+                        ROW_NUMBER() OVER () AS No, aspek_id,
+                        survey_ids, aspek, nilai_aspek, nilai_konversi_aspek, bobot, nilai_konversi
+                        FROM CombinedData where survey_ids = {} and aspek_id = {}
+                                   """.format(survey_id, aspek_id)
+            http.request.env.cr.execute(query_kinerja)
+            fetched_data_kinerja = http.request.env.cr.fetchall()
+            column_names_kinerja = [desc[0] for desc in http.request.env.cr.description]
+            for row in fetched_data_kinerja:
+                row_dict = dict(zip(column_names_kinerja, row))
+                for key, value in row_dict.items():
+                    if isinstance(value, datetime):
+                        row_dict[key] = str(value)
+                data['kinerja'].append(row_dict)
             body = {'status': True, 'message': 'OK', 'data': data}
             statusCode = 200
         except Exception as e:
