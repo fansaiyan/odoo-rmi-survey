@@ -172,6 +172,56 @@ class CustomAPIController(http.Controller):
         }
         body = {'status': 200, 'message': 'OK', 'data': data}
         return Response(json.dumps(body), headers=headers)
+
+    @http.route('/api/aspek-kinerja/<int:id>', website=False, auth='public', type="http", csrf=False, methods=['GET'])
+    def _get_aspek_kinerja_detaila(self, id,  **kwargs):
+        data = []
+        query = """
+                 WITH CombinedData AS (
+                    select
+                        a.id as aspek_id,
+                        'Tingkat Kesehatan Peringkat' as aspek,
+                        fr.name as nilai_aspek,
+                        fr.nilai as nilai_konversi_aspek,
+                        a.final_rating_weight as bobot,
+                        ROUND((fr.nilai * a.final_rating_weight) / 100::NUMERIC, 1) as nilai_konversi,
+                        a.survey_ids
+                        from rmi_aspek_kinerja as a
+                        left join rmi_final_rating as fr on fr.id = a.aspect_values
+                    UNION ALL
+                    select
+                        a.id as aspek_id,
+                        'Peringkat Komposit Resiko' as aspek,
+                        kr.name as nilai_aspek,
+                        kr.nilai as nilai_konversi_aspek,
+                        a.composite_risk_weight as bobot,
+                        ROUND((kr.nilai * a.composite_risk_weight) / 100::NUMERIC, 1) as nilai_konversi,
+                        a.survey_ids
+                        from rmi_aspek_kinerja as a
+                        left join rmi_komposit_risiko as kr on kr.id = a.composite_risk_levels
+                )
+                SELECT
+                    ROW_NUMBER() OVER () AS No, aspek_id,
+                    survey_ids, aspek, nilai_aspek, nilai_konversi_aspek, bobot, nilai_konversi
+                    FROM CombinedData where aspek_id = {}
+                """.format(id)
+        http.request.env.cr.execute(query)
+        fetched_data = http.request.env.cr.fetchall()
+        column_names = [desc[0] for desc in http.request.env.cr.description]
+        for row in fetched_data:
+            row_dict = dict(zip(column_names, row))
+            for key, value in row_dict.items():
+                if isinstance(value, datetime):
+                    row_dict[key] = str(value)
+            data.append(row_dict)
+        origin = http.request.httprequest.headers.get('Origin')
+        headers = {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': origin,
+            'Access-Control-Allow-Credentials': 'true'
+        }
+        body = {'status': 200, 'message': 'OK', 'data': data}
+        return Response(json.dumps(body), headers=headers)
     @http.route('/api/report/adjust-aspek-dimensi', website=False, auth='public', type="http", csrf=False, methods=['GET'])
     def _adjust_aspek_dimensi(self, **kwargs):
         survey_id = kwargs.get('survey_id', None)
