@@ -353,7 +353,7 @@ class CustomAPIController(http.Controller):
             }
             statusCode = 500
         return Response(json.dumps(body), headers=headers, status=statusCode)
-    @http.route('/api/aspek-dimensi-corporate', website=False, auth='public', type="http", csrf=False, methods=['GET'])
+    @http.route('/api/report/aspek-dimensi', website=False, auth='public', type="http", csrf=False, methods=['GET'])
     def _aspek_dimensi_corporate(self, **kwargs):
         survey_id = kwargs.get('survey_id', None)
         data = []
@@ -384,7 +384,8 @@ class CustomAPIController(http.Controller):
                         END as parameter,
                         f.param_dimensi_id AS dimensi,
                         f.name as deskripsi,
-                        TRUNC(avg((e.value->>'en_US')::int) * 10) / 10.0 AS skordimensi
+                        TRUNC(avg((e.value->>'en_US')::int) * 10) / 10.0 AS skordimensi,
+                        max((e.value->>'en_US')::int) as skor_max
                         from survey_user_input_line as a
                         left join survey_question as b on a.question_id = b.id
                         left join survey_user_input as c on c.id = a.user_input_id
