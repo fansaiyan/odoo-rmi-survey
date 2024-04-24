@@ -118,12 +118,12 @@ class AspekKinerja(models.Model):
             [('code', '=', 'rmi.survey')],
             limit=1
         )
-        year = current_time.strftime('%y')
-        month = current_time.strftime('%mm')
+        year = current_time.strftime('%Y')
+        month = current_time.strftime('%m')
         next_number = dt_sequence.number_next
         formatted_number = str(next_number).zfill(2)
         sequence_prefix = formatted_number + "/"
-        sequence_suffix = month + "/RMI/" + year
+        sequence_suffix = self.to_roman(month) + "/RMI/" + year
 
         no_laporan = sequence_prefix + sequence_suffix
         new_order.write({'no_laporan': no_laporan, 'state': 'done'})
@@ -133,6 +133,28 @@ class AspekKinerja(models.Model):
         })
         return new_order
 
+    def to_roman(self, num_str):
+        num = int(num_str)
+        val = [
+            1000, 900, 500, 400,
+            100, 90, 50, 40,
+            10, 9, 5, 4,
+            1
+        ]
+        syb = [
+            "M", "CM", "D", "CD",
+            "C", "XC", "L", "XL",
+            "X", "IX", "V", "IV",
+            "I"
+        ]
+        roman_num = ''
+        i = 0
+        while num > 0:
+            for _ in range(num // val[i]):
+                roman_num += syb[i]
+                num -= val[i]
+            i += 1
+        return roman_num
     @api.onchange('final_rating_weight', 'aspect_values', 'composite_risk_levels')
     def _compute_conversion_rating_value(self):
         for record in self:
