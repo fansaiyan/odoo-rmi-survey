@@ -15,6 +15,14 @@ class SurveyInherit(models.Model):
     periode = fields.Char(string='Periode')
     dashboard_id = fields.Many2one('rmi.survey_dashboard_aspect_dimension', string='Dashboard')
     company_id = fields.Many2one('res.company', string='Company', default=lambda self: self.env.company.id)
+    single_company_user = fields.Boolean(string="single companies user", compute='get_user')
+
+    @api.depends('company_id')
+    def get_user(self):
+        if len(self.env.user.company_ids) == 1:
+            self.single_company_user = True
+        else:
+            self.single_company_user = False
 
     def generate_adjust_aspect_dimension(self):
         # Execute custom SQL query

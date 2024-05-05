@@ -8,7 +8,8 @@
         <field name="arch" type="xml">
             <xpath expr="//group/group/field[@name='user_id']" position="after">
                 <field name="jenis_industri"/>
-                <field name="company_id"/>
+                <field name="single_company_user" invisible="1"/>
+                <field name="company_id"  attrs="{'readonly': [('single_company_user', '=', True)]}"/>
                 <field name="periode"/>
             </xpath>
             <xpath expr="//button[@name='action_archive']" position="after">
@@ -28,6 +29,9 @@
             </xpath>
             <xpath expr="//tree/field[@name='answer_score_avg']" position="attributes">
                 <attribute name="optional">hide</attribute>
+            </xpath>
+             <xpath expr="//tree/field[@name='title']" position="after">
+                <field name="company_id" groups="base.group_multi_company" optional="show"/>
             </xpath>
         </field>
     </record>
