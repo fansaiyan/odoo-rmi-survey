@@ -60,6 +60,15 @@
                         </tree>
                     </field>
                 </page>
+                 <page
+                    string="Suggestion"
+                    name="suggestion_of_question">
+                    <field name="suggestion_ids">
+                        <tree>
+                            <field name="name" />
+                        </tree>
+                    </field>
+                </page>
             </xpath>
         </field>
     </record>

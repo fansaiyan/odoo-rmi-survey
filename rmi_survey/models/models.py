@@ -96,12 +96,23 @@ class SurveyQuestionInherit(models.Model):
         string='Documents',
         required=False
     )
+    suggestion_ids = fields.One2many(
+        comodel_name='rmi.question.suggestion',
+        inverse_name='question_id',
+        string='Suggestion',
+        required=False
+    )
 
     @api.onchange('dimensi_names')
     def _onchange_dimension_id(self):
         if self.sub_dimensi_names:
             self.sub_dimensi_names = False
 
+class QuestionSuggestion(models.Model):
+    _name = 'rmi.question.suggestion'
+    _description = 'Suggestion of Question'
+    name = fields.Char(string='Suggestion')
+    question_id = fields.Many2one('survey.question', 'Question')
 
 class HrEmployeeInherit(models.Model):
     """inherited hr employee """
