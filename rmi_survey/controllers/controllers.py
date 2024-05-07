@@ -179,17 +179,41 @@ class CustomAPIController(http.Controller):
 
     @http.route('/api/aspek-kinerja-create', website=False, auth='public', type="http", csrf=False, methods=['POST'])
     def post_aspek_kinerja_create(self, **kwargs):
-        data = []
-        # body = io.BytesIO(request.httprequest.data)
-        # payload = json.load(body)
+        body = io.BytesIO(request.httprequest.data)
+        payload = json.load(body)
         origin = http.request.httprequest.headers.get('Origin')
         headers = {
             'Content-Type': 'application/json',
             'Access-Control-Allow-Origin': origin,
             'Access-Control-Allow-Credentials': 'true'
         }
-        result = {'status': 200, 'message': 'OK', 'data': None}
-        return Response(json.dumps(result), headers=headers)
+        try:
+            survey = request.env['survey.survey'].sudo().search([('id', '=', payload['survey_ids'])], limit=1)
+            postBody = {
+                'create_uid': payload['uid'],
+                'write_uid': payload['uid'],
+                'name': payload['name'],
+                'aspect_values': payload['aspect_value'],
+                'composite_risk_levels': payload['composite_risk_levels'],
+                'final_rating_weight': payload['final_rating_weight'],
+                'composite_risk_weight': payload['composite_risk_weight'],
+                'company_name': survey.company_id.name,
+                'score_adjustment': payload['score_adjustment'],
+                'survey_ids': payload['survey_ids'],
+                'state': 'done'
+            }
+            insert = request.env['rmi.aspek_kinerja'].sudo().create(postBody)
+            if insert.id:
+                body = {'status': 200, 'message': 'OK', 'data': None}
+        except Exception as e:
+            errorMsg = f"An error occurred: {e}"
+            body = {
+                'status': 500,
+                'message': errorMsg,
+                'execution_time': '0s'
+            }
+            # body = {'status': 200, 'message': 'OK', 'data': payload}
+        return Response(json.dumps(body), headers=headers)
 
     @http.route('/api/aspek-kinerja/<int:id>', website=False, auth='public', type="http", csrf=False, methods=['GET'])
     def _get_aspek_kinerja_detaila(self, id,  **kwargs):
