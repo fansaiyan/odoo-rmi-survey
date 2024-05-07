@@ -144,6 +144,40 @@ class CustomAPIController(http.Controller):
         body = {'status': 200, 'message': 'OK', 'data': data}
         return Response(json.dumps(body), headers=headers)
 
+    @http.route('/api/survey-by-id/<int:id>', website=False, auth='public', type="http", csrf=False, methods=['GET'])
+    def _get_survey_by_id(self, id, **kwargs):
+        data = []
+        query = """
+                 select
+                    s.id,
+                    (s.title->>'en_US')::varchar AS name,
+                    s.user_id,
+                    s.company_id,
+                    s.periode,
+                    s.jenis_industri,
+                    c.name as company_name
+                    from survey_survey as s
+                    left join res_company as c on c.id = s.company_id 
+                    where s.id = {}
+                    """.format(id)
+        http.request.env.cr.execute(query)
+        fetched_data = http.request.env.cr.fetchall()
+        column_names = [desc[0] for desc in http.request.env.cr.description]
+        for row in fetched_data:
+            row_dict = dict(zip(column_names, row))
+            for key, value in row_dict.items():
+                if isinstance(value, datetime):
+                    row_dict[key] = str(value)
+            data.append(row_dict)
+        origin = http.request.httprequest.headers.get('Origin')
+        headers = {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': origin,
+            'Access-Control-Allow-Credentials': 'true'
+        }
+        body = {'status': 200, 'message': 'OK', 'data': data}
+        return Response(json.dumps(body), headers=headers)
+
     @http.route('/api/aspek-kinerja-list', website=False, auth='public', type="http", csrf=False, methods=['GET'])
     def _get_aspek_kinerja_list(self, **kwargs):
         data = []
@@ -177,14 +211,80 @@ class CustomAPIController(http.Controller):
         body = {'status': 200, 'message': 'OK', 'data': data}
         return Response(json.dumps(body), headers=headers)
 
-    @http.route('/api/aspek-kinerja-create', website=False, auth='public', type="http", csrf=False, methods=['POST'])
-    def post_aspek_kinerja_create(self, **kwargs):
-        body = io.BytesIO(request.httprequest.data)
-        payload = json.load(body)
+    @http.route('/api/aspek-kinerja-by-id/<int:id>', website=False, auth='public', type="http", csrf=False, methods=['GET'])
+    def _get_aspek_kinerja_by_id(self, id, **kwargs):
+        data = []
+        query = """
+                     select
+                        ROW_NUMBER() OVER () AS no,
+                        a.*,
+                        (b.title ->>'en_US')::varchar AS survey_name,
+                        b.periode,
+                        b.jenis_industri,
+                        c.name as company_name
+                    from rmi_aspek_kinerja as a
+                    left join survey_survey as b on b.id = a.survey_ids
+                    left join res_company as c on c.id = b.company_id
+                    where a.id = {}
+                """.format(id)
+        http.request.env.cr.execute(query)
+        fetched_data = http.request.env.cr.fetchall()
+        column_names = [desc[0] for desc in http.request.env.cr.description]
+        for row in fetched_data:
+            row_dict = dict(zip(column_names, row))
+            for key, value in row_dict.items():
+                if isinstance(value, datetime):
+                    row_dict[key] = str(value)
+            data.append(row_dict)
         origin = http.request.httprequest.headers.get('Origin')
         headers = {
             'Content-Type': 'application/json',
             'Access-Control-Allow-Origin': origin,
+            'Access-Control-Allow-Credentials': 'true'
+        }
+        body = {'status': 200, 'message': 'OK', 'data': data}
+        return Response(json.dumps(body), headers=headers)
+
+    @http.route('/api/aspek-kinerja-delete/<int:id>', website=False, auth='public', type="http", csrf=False,
+                methods=['DELETE'], cors="*")
+    def _get_aspek_kinerja_delete(self, id, **kwargs):
+        headers = {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Credentials': 'true'
+        }
+        try:
+            data = request.env['rmi.aspek_kinerja'].sudo().search([('id', '=', id)], limit=1)
+            if data is None:
+                errorMsg = f"Data Tidak Ditemukan"
+                body = {
+                    'status': 500,
+                    'message': errorMsg,
+                    'execution_time': '0s'
+                }
+            else:
+                if data.unlink():
+                    body = {'status': 200, 'message': 'OK', 'data': None}
+        except Exception as e:
+            errorMsg = f"An error occurred: {e}"
+            body = {
+                'status': 500,
+                'message': errorMsg,
+                'execution_time': '0s'
+            }
+            # body = {'status': 200, 'message': 'OK', 'data': payload}
+        return Response(json.dumps(body), headers=headers)
+
+    @http.route('/api/aspek-kinerja-create', website=False, auth='public', type="http", csrf=False, methods=['POST'], cors="*")
+    def post_aspek_kinerja_create(self, **kwargs):
+        body = io.BytesIO(request.httprequest.data)
+        payload = json.load(body)
+        id = None
+        if payload['id'] != 0:
+            id = payload['id']
+        origin = http.request.httprequest.headers.get('Origin')
+        headers = {
+            'Content-Type': 'application/json',
+            # 'Access-Control-Allow-Origin': '*',
             'Access-Control-Allow-Credentials': 'true'
         }
         try:
@@ -202,9 +302,14 @@ class CustomAPIController(http.Controller):
                 'survey_ids': payload['survey_ids'],
                 'state': 'done'
             }
-            insert = request.env['rmi.aspek_kinerja'].sudo().create(postBody)
-            if insert.id:
+            if id is not None:
+                existing_record = request.env['rmi.aspek_kinerja'].sudo().browse(id)
+                existing_record.write(postBody)
                 body = {'status': 200, 'message': 'OK', 'data': None}
+            else:
+                insert = request.env['rmi.aspek_kinerja'].sudo().create(postBody)
+                if insert.id:
+                    body = {'status': 200, 'message': 'OK', 'data': None}
         except Exception as e:
             errorMsg = f"An error occurred: {e}"
             body = {
