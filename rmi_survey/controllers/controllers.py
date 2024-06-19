@@ -762,7 +762,7 @@ class CustomAPIController(http.Controller):
                         f.param_dimensi_id AS dimensi,
                         f.name as deskripsi,
                         TRUNC(avg((e.value->>'en_US')::int) * 10) / 10.0 AS skordimensi,
-                        max((e.value->>'en_US')::int) as skor_max
+                        5 as skor_max
                         from survey_user_input_line as a
                         left join survey_question as b on a.question_id = b.id
                         left join survey_user_input as c on c.id = a.user_input_id
