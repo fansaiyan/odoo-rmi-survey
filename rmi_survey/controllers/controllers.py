@@ -572,7 +572,7 @@ class CustomAPIController(http.Controller):
                             left join rmi_param_dimensi as i on i.id = b.dimensi_names
                             left join rmi_param_group as j on j.id = b.sub_dimensi_names
                             left join survey_survey as ss on ss.id = a.survey_id
-                        where a.survey_id = 6 and c.state = 'done'
+                        where a.survey_id = {} and c.state = 'done'
                         GROUP BY a.question_id, parameterName, company, i.name, j.name, survey_name, a.survey_id, j.id
                         ORDER BY a.question_id ASC
                     ) as subq
