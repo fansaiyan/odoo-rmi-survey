@@ -181,6 +181,7 @@ class CustomAPIController(http.Controller):
     @http.route('/api/aspek-kinerja-list', website=False, auth='public', type="http", csrf=False, methods=['GET'])
     def _get_aspek_kinerja_list(self, **kwargs):
         data = []
+        company_id = kwargs.get('company_id', None)
         query = """
                  select
                     ROW_NUMBER() OVER () AS no,
@@ -193,6 +194,8 @@ class CustomAPIController(http.Controller):
                 left join survey_survey as b on b.id = a.survey_ids
                 left join res_company as c on c.id = b.company_id
             """
+        if company_id:
+            query += f" where b.company_id = {company_id}"
         http.request.env.cr.execute(query)
         fetched_data = http.request.env.cr.fetchall()
         column_names = [desc[0] for desc in http.request.env.cr.description]
