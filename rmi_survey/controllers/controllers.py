@@ -755,27 +755,43 @@ class CustomAPIController(http.Controller):
         try:
             query = """
                       select
-                        CASE
-                            WHEN f.name = 'Budaya dan Kapabilitas Risiko' THEN '1 s.d. 3'
-                            WHEN f.name = 'Organisasi dan Tata Kelola Risiko' THEN '4 s.d. 19'
-                            WHEN f.name = 'Kerangka Risiko dan Kepatuhan' THEN '20 s.d. 33'
-                            WHEN f.name = 'Proses dan Kontrol Risiko' THEN '34 s.d. 39'
-                            ELSE '40 s.d. 42'
-                        END as parameter,
-                        f.param_dimensi_id AS dimensi,
-                        f.name as deskripsi,
-                        TRUNC(avg((e.value->>'en_US')::int) * 10) / 10.0 AS skordimensi,
-                        5 as skor_max
-                        from survey_user_input_line as a
-                        left join survey_question as b on a.question_id = b.id
-                        left join survey_user_input as c on c.id = a.user_input_id
-                        left join res_partner as d on d.id = c.partner_id
-                        left join survey_question_answer as e on e.id = a.suggested_answer_id
-                        left join rmi_param_dimensi as f on f.id = b.dimensi_names
-                        left join rmi_param_group as g on g.id = b.sub_dimensi_names
-                    where a.survey_id = {}
-                    group by f.name, f.id
-                    order by f.id asc
+                            ROW_NUMBER() OVER () AS no,
+                            subq.parameter,
+                            subq.dimensi,
+                            subq.deskripsi,
+                            ROUND(avg(subq.minvalue::int), 2) as skordimensi,
+                            subq.skor_max
+                            from
+                            (
+                                select
+                                    CASE
+                                        WHEN i.name = 'Budaya dan Kapabilitas Risiko' THEN '1 s.d. 3'
+                                        WHEN i.name = 'Organisasi dan Tata Kelola Risiko' THEN '4 s.d. 19'
+                                        WHEN i.name = 'Kerangka Risiko dan Kepatuhan' THEN '20 s.d. 33'
+                                        WHEN i.name = 'Proses dan Kontrol Risiko' THEN '34 s.d. 39'
+                                        ELSE '40 s.d. 42'
+                                    END as parameter,
+                                    i.param_dimensi_id as dimensi,
+                                    i.name as deskripsi,
+                                    min((e.value->>'en_US')::int) as minvalue,
+                                    5 as skor_max
+                                    from survey_user_input_line as a
+                                    left join survey_question as b on a.question_id = b.id
+                                    left join survey_user_input as c on c.id = a.user_input_id
+                                    left join res_partner as d on d.id = c.partner_id
+                                    left join survey_question_answer as e on e.id = a.suggested_answer_id
+                                    left join res_users as f on f.partner_id = d.id
+                                    left join hr_employee as g on g.user_id = f.id
+                                    left join res_company as h on h.id = g.company_id
+                                    left join rmi_param_dimensi as i on i.id = b.dimensi_names
+                                    left join rmi_param_group as j on j.id = b.sub_dimensi_names
+                                    left join survey_survey as ss on ss.id = a.survey_id
+                                where a.survey_id = {} and c.state = 'done'
+                                GROUP BY a.question_id, i.name, j.name, a.survey_id, j.id, i.id
+                                ORDER BY a.question_id ASC
+                            ) as subq
+                        GROUP BY subq.dimensi, subq.parameter, subq.deskripsi, subq.skor_max
+                        ORDER BY subq.dimensi
                    """.format(survey_id)
             http.request.env.cr.execute(query)
             fetched_data = http.request.env.cr.fetchall()
@@ -845,26 +861,41 @@ class CustomAPIController(http.Controller):
                 data['summary'].append(row_dict)
             query_dimensi = """
                           select
-                            CASE
-                                WHEN f.name = 'Budaya dan Kapabilitas Risiko' THEN '1 s.d. 3'
-                                WHEN f.name = 'Organisasi dan Tata Kelola Risiko' THEN '4 s.d. 19'
-                                WHEN f.name = 'Kerangka Risiko dan Kepatuhan' THEN '20 s.d. 33'
-                                WHEN f.name = 'Proses dan Kontrol Risiko' THEN '34 s.d. 39'
-                                ELSE '40 s.d. 42'
-                            END as parameter,
-                            f.param_dimensi_id AS dimensi,
-                            f.name as deskripsi,
-                            TRUNC(avg((e.value->>'en_US')::int) * 10) / 10.0 AS skordimensi
-                            from survey_user_input_line as a
-                            left join survey_question as b on a.question_id = b.id
-                            left join survey_user_input as c on c.id = a.user_input_id
-                            left join res_partner as d on d.id = c.partner_id
-                            left join survey_question_answer as e on e.id = a.suggested_answer_id
-                            left join rmi_param_dimensi as f on f.id = b.dimensi_names
-                            left join rmi_param_group as g on g.id = b.sub_dimensi_names
-                        where a.survey_id = {}
-                        group by f.name, f.id
-                        order by f.id asc
+                            ROW_NUMBER() OVER () AS no,
+                            subq.parameter,
+                            subq.dimensi,
+                            subq.deskripsi,
+                            ROUND(avg(subq.minvalue::int), 2) as skordimensi
+                            from
+                            (
+                                select
+                                    CASE
+                                        WHEN i.name = 'Budaya dan Kapabilitas Risiko' THEN '1 s.d. 3'
+                                        WHEN i.name = 'Organisasi dan Tata Kelola Risiko' THEN '4 s.d. 19'
+                                        WHEN i.name = 'Kerangka Risiko dan Kepatuhan' THEN '20 s.d. 33'
+                                        WHEN i.name = 'Proses dan Kontrol Risiko' THEN '34 s.d. 39'
+                                        ELSE '40 s.d. 42'
+                                    END as parameter,
+                                    i.param_dimensi_id as dimensi,
+                                    i.name as deskripsi,
+                                    min((e.value->>'en_US')::int) as minvalue
+                                    from survey_user_input_line as a
+                                    left join survey_question as b on a.question_id = b.id
+                                    left join survey_user_input as c on c.id = a.user_input_id
+                                    left join res_partner as d on d.id = c.partner_id
+                                    left join survey_question_answer as e on e.id = a.suggested_answer_id
+                                    left join res_users as f on f.partner_id = d.id
+                                    left join hr_employee as g on g.user_id = f.id
+                                    left join res_company as h on h.id = g.company_id
+                                    left join rmi_param_dimensi as i on i.id = b.dimensi_names
+                                    left join rmi_param_group as j on j.id = b.sub_dimensi_names
+                                    left join survey_survey as ss on ss.id = a.survey_id
+                                where a.survey_id = {} and c.state = 'done'
+                                GROUP BY a.question_id, i.name, j.name, a.survey_id, j.id, i.id
+                                ORDER BY a.question_id ASC
+                            ) as subq
+                        GROUP BY subq.dimensi, subq.parameter, subq.deskripsi
+                        ORDER BY subq.dimensi
                        """.format(survey_id)
             http.request.env.cr.execute(query_dimensi)
             fetched_data_dimensi = http.request.env.cr.fetchall()
