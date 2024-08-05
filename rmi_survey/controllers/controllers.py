@@ -602,7 +602,7 @@ class CustomAPIController(http.Controller):
             statusCode = 500
         return Response(json.dumps(body), headers=headers, status=statusCode)
 
-    @http.route('/api/report/interest-coverage-ratio-by-rate', website=False, auth='public', type="http", csrf=False,
+    @http.route('/api/interest-coverage-ratio-by-rate', website=False, auth='public', type="http", csrf=False,
                 methods=['GET'])
     def _interest_coverage_ratio_by_rate(self, **kwargs):
         rate = kwargs.get('rate', None)
@@ -647,9 +647,9 @@ class CustomAPIController(http.Controller):
             statusCode = 500
         return Response(json.dumps(body), headers=headers, status=statusCode)
 
-    @http.route('/api/report/interest-coverage-ratio', website=False, auth='public', type="http", csrf=False,
+    @http.route('/api/interest-coverage-ratio', website=False, auth='public', type="http", csrf=False,
                 methods=['GET'])
-    def _interest_coverage_ratio_by_rate(self, **kwargs):
+    def _interest_coverage_ratio(self, **kwargs):
         data = []
         origin = http.request.httprequest.headers.get('Origin')
         headers = {
