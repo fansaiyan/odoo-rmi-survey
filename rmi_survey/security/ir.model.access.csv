@@ -11,3 +11,4 @@ access_rmi_aspek_dimensi_corporate,access_rmi_aspek_dimensi_corporate,model_rmi_
 access_rmi_documents,access_rmi_documents,model_rmi_documents,base.group_user,1,1,1,1
 access_res_branch_group_user,res_branch_group_user,model_res_branch,,1,1,1,1
 access_rmi_question_suggestion,access_rmi_question_suggestion,model_rmi_question_suggestion,base.group_user,1,1,1,1
+access_rmi_icr,access_rmi_icr,model_rmi_icr,base.group_user,1,1,1,1

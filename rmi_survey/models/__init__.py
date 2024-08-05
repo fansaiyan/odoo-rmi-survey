@@ -9,3 +9,4 @@ from . import param_group
 from . import res_branch
 from . import dashboard
 from . import documents
+from . import interest_coverage_ratio
