@@ -602,6 +602,84 @@ class CustomAPIController(http.Controller):
             statusCode = 500
         return Response(json.dumps(body), headers=headers, status=statusCode)
 
+    @http.route('/api/report/interest-coverage-ratio-by-rate', website=False, auth='public', type="http", csrf=False,
+                methods=['GET'])
+    def _interest_coverage_ratio_by_rate(self, **kwargs):
+        rate = kwargs.get('rate', None)
+        data = []
+        origin = http.request.httprequest.headers.get('Origin')
+        headers = {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': origin,
+            'Access-Control-Allow-Credentials': 'true'
+        }
+        if not rate:
+            statusCode = 400
+            body = {
+                'status': False,
+                'message': 'Required parameter "rate" is missing'
+            }
+            return Response(json.dumps(body), headers=headers, status=statusCode)
+        try:
+            query = """
+                      SELECT *
+                            FROM rmi_icr
+                            WHERE {} BETWEEN min AND max
+                               """.format(rate)
+            http.request.env.cr.execute(query)
+            fetched_data = http.request.env.cr.fetchall()
+            column_names = [desc[0] for desc in http.request.env.cr.description]
+            for row in fetched_data:
+                row_dict = dict(zip(column_names, row))
+                for key, value in row_dict.items():
+                    if isinstance(value, datetime):
+                        row_dict[key] = str(value)
+                data.append(row_dict)
+            body = {'status': True, 'message': 'OK', 'data': data}
+            statusCode = 200
+        except Exception as e:
+            errorMsg = f"An error occurred: {e}"
+            body = {
+                'status': False,
+                'message': errorMsg,
+                'execution_time': '0s'
+            }
+            statusCode = 500
+        return Response(json.dumps(body), headers=headers, status=statusCode)
+
+    @http.route('/api/report/interest-coverage-ratio', website=False, auth='public', type="http", csrf=False,
+                methods=['GET'])
+    def _interest_coverage_ratio_by_rate(self, **kwargs):
+        data = []
+        origin = http.request.httprequest.headers.get('Origin')
+        headers = {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': origin,
+            'Access-Control-Allow-Credentials': 'true'
+        }
+        try:
+            query = """SELECT * FROM rmi_icr"""
+            http.request.env.cr.execute(query)
+            fetched_data = http.request.env.cr.fetchall()
+            column_names = [desc[0] for desc in http.request.env.cr.description]
+            for row in fetched_data:
+                row_dict = dict(zip(column_names, row))
+                for key, value in row_dict.items():
+                    if isinstance(value, datetime):
+                        row_dict[key] = str(value)
+                data.append(row_dict)
+            body = {'status': True, 'message': 'OK', 'data': data}
+            statusCode = 200
+        except Exception as e:
+            errorMsg = f"An error occurred: {e}"
+            body = {
+                'status': False,
+                'message': errorMsg,
+                'execution_time': '0s'
+            }
+            statusCode = 500
+        return Response(json.dumps(body), headers=headers, status=statusCode)
+
     @http.route('/api/report/adjust-aspek-dimensi-detail', website=False, auth='public', type="http", csrf=False, methods=['GET'])
     def _adjust_aspek_dimensi_detail(self, **kwargs):
         survey_id = kwargs.get('survey_id', None)
