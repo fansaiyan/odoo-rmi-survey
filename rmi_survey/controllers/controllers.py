@@ -418,7 +418,7 @@ class CustomAPIController(http.Controller):
                         left join rmi_param_dimensi as i on i.id = b.dimensi_names
                         left join rmi_param_group as j on j.id = b.sub_dimensi_names
                         left join survey_survey as ss on ss.id = a.survey_id
-                    where a.survey_id = {} and c.state = 'done'
+                    where a.survey_id = {} and c.state = 'done' and a.suggested_answer_id is not null
                     GROUP BY a.question_id, parameterName, company, i.name, j.name, survey_name, a.survey_id
                     ORDER BY a.question_id ASC
                    """.format(survey_id)
@@ -493,7 +493,7 @@ class CustomAPIController(http.Controller):
                                 left join rmi_param_dimensi as i on i.id = b.dimensi_names
                                 left join rmi_param_group as j on j.id = b.sub_dimensi_names
                                 left join survey_survey as ss on ss.id = a.survey_id
-                            where a.survey_id = {} and c.state = 'done'
+                            where a.survey_id = {} and c.state = 'done' and a.suggested_answer_id is not null
                             GROUP BY company, i.name, j.name, survey_name, a.survey_id, j.id, i.id
                             ORDER BY j.id ASC
                         ) as subq
@@ -574,7 +574,7 @@ class CustomAPIController(http.Controller):
                             left join rmi_param_dimensi as i on i.id = b.dimensi_names
                             left join rmi_param_group as j on j.id = b.sub_dimensi_names
                             left join survey_survey as ss on ss.id = a.survey_id
-                        where a.survey_id = {} and c.state = 'done'
+                        where a.survey_id = {} and c.state = 'done' and a.suggested_answer_id is not null
                         GROUP BY a.question_id, parameterName, company, i.name, j.name, survey_name, a.survey_id, j.id
                         ORDER BY a.question_id ASC
                     ) as subq
@@ -641,7 +641,7 @@ class CustomAPIController(http.Controller):
                     left join hr_employee as g on g.user_id = f.id
                     left join res_company as h on h.id = g.company_id
                     left join hr_department as i on i.id = g.department_id
-                where a.survey_id = {} and c.state = 'done' and a.question_id = {}
+                where a.survey_id = {} and c.state = 'done' and a.question_id = {} and a.suggested_answer_id is not null
                """.format(survey_id, question_id)
             http.request.env.cr.execute(query)
             fetched_data = http.request.env.cr.fetchall()
@@ -697,7 +697,8 @@ class CustomAPIController(http.Controller):
                             subquery.parameterName,
                             subquery.user,
                             subquery.Department,
-                            subquery.value
+                            subquery.value,
+                            subquery.filename
                             from (
                                 select
                                     (ss.title->>'en_US')::varchar AS survey_name,
@@ -710,7 +711,8 @@ class CustomAPIController(http.Controller):
                                     (b.title->>'en_US')::varchar AS parameterName,
                                     d.name as user,
                                     hr.name as Department,
-                                    (e.value->>'en_US')::int AS value
+                                    (e.value->>'en_US')::int AS value,
+                                    sqa.value_char_box as filename
                                     from survey_user_input_line as a
                                     left join survey_question as b on a.question_id = b.id
                                     left join survey_user_input as c on c.id = a.user_input_id
@@ -723,7 +725,8 @@ class CustomAPIController(http.Controller):
                                     left join rmi_param_group as j on j.id = b.sub_dimensi_names
                                     left join survey_survey as ss on ss.id = a.survey_id
                                     left join hr_department as hr on hr.id = g.department_id
-                                    where a.survey_id = {} and c.state = 'done' order by subdimensi_id
+                                    left join survey_user_input_line as sqa on sqa.question_id = a.question_id and sqa.suggested_answer_id is null and sqa.write_uid = f.id
+                                    where a.survey_id = {} and c.state = 'done' and a.suggested_answer_id is not null order by subdimensi_id
                                  ) as subquery
                    """.format(survey_id)
             http.request.env.cr.execute(query)
@@ -799,7 +802,7 @@ class CustomAPIController(http.Controller):
                                     left join rmi_param_dimensi as i on i.id = b.dimensi_names
                                     left join rmi_param_group as j on j.id = b.sub_dimensi_names
                                     left join survey_survey as ss on ss.id = a.survey_id
-                                where a.survey_id = {} and c.state = 'done'
+                                where a.survey_id = {} and c.state = 'done' and a.suggested_answer_id is not null
                                 GROUP BY a.question_id, i.name, j.name, a.survey_id, j.id, i.id
                                 ORDER BY a.question_id ASC
                             ) as subq
@@ -903,7 +906,7 @@ class CustomAPIController(http.Controller):
                                     left join rmi_param_dimensi as i on i.id = b.dimensi_names
                                     left join rmi_param_group as j on j.id = b.sub_dimensi_names
                                     left join survey_survey as ss on ss.id = a.survey_id
-                                where a.survey_id = {} and c.state = 'done'
+                                where a.survey_id = {} and c.state = 'done' and a.suggested_answer_id is not null
                                 GROUP BY a.question_id, i.name, j.name, a.survey_id, j.id, i.id
                                 ORDER BY a.question_id ASC
                             ) as subq
