@@ -1049,3 +1049,170 @@ class CustomAPIController(http.Controller):
             }
             statusCode = 500
         return Response(json.dumps(body), headers=headers, status=statusCode)
+
+    @http.route('/api/report/chart1', website=False, auth='public', type="http", csrf=False, methods=['GET'])
+    def _aspek_dimensi_corporate(self, **kwargs):
+        survey_id = kwargs.get('survey_id')
+        periode = kwargs.get('periode')
+        jenis_industri = kwargs.get('jenis_industri')
+        data = []
+        body = {}
+        statusCode = 200
+        origin = http.request.httprequest.headers.get('Origin')
+        headers = {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': origin,
+            'Access-Control-Allow-Credentials': 'true'
+        }
+        if not survey_id:
+            statusCode = 400
+            body = {
+                'status': False,
+                'message': 'Required parameter "survey_id" is missing'
+            }
+            return Response(json.dumps(body), headers=headers, status=statusCode)
+        try:
+            query = """
+                (
+                SELECT
+                    subq.survey_key,
+                    subq.survey_name,
+                    subq.jenis_industri,
+                    ROUND(AVG(CASE WHEN subq.dimensi_id = 1 THEN subq.avg END), 2) AS dimensi_1,
+                    ROUND(AVG(CASE WHEN subq.dimensi_id = 2 THEN subq.avg END), 2) AS dimensi_2,
+                    ROUND(AVG(CASE WHEN subq.dimensi_id = 3 THEN subq.avg END), 2) AS dimensi_3,
+                    ROUND(AVG(CASE WHEN subq.dimensi_id = 4 THEN subq.avg END), 2) AS dimensi_4,
+                    ROUND(AVG(CASE WHEN subq.dimensi_id = 5 THEN subq.avg END), 2) AS dimensi_5
+                FROM (
+                    SELECT
+                        'sur-' || CAST(ss.id as TEXT) as survey_key,
+                        ss.title->>'en_US' AS survey_name,
+                        i.id AS dimensi_id,
+                        ROUND(AVG((e.value->>'en_US')::int), 2) AS avg,
+                        ss.jenis_industri
+                    FROM survey_user_input_line AS a
+                    LEFT JOIN survey_question AS b ON a.question_id = b.id
+                    LEFT JOIN survey_user_input AS c ON c.id = a.user_input_id
+                    LEFT JOIN res_partner AS d ON d.id = c.partner_id
+                    LEFT JOIN survey_question_answer AS e ON e.id = a.suggested_answer_id
+                    LEFT JOIN res_users AS f ON f.partner_id = d.id
+                    LEFT JOIN hr_employee AS g ON g.user_id = f.id
+                    LEFT JOIN res_company AS h ON h.id = g.company_id
+                    LEFT JOIN rmi_param_dimensi AS i ON i.id = b.dimensi_names
+                    LEFT JOIN rmi_param_group AS j ON j.id = b.sub_dimensi_names
+                    LEFT JOIN survey_survey AS ss ON ss.id = a.survey_id
+                    WHERE c.state = 'done'
+                      AND a.suggested_answer_id IS NOT NULL and ss.id = """+survey_id+"""
+                    GROUP BY i.name, survey_name, a.survey_id, j.id, i.id, ss.jenis_industri, ss.id
+                    ORDER BY j.id ASC
+                ) AS subq
+                GROUP BY subq.survey_name, subq.jenis_industri, subq.survey_key
+                ORDER BY subq.survey_name
+                )
+                UNION ALL
+                (
+                    SELECT
+                    subq.survey_key,
+                    subq.survey_name,
+                    subq.jenis_industri,
+                    ROUND(MAX(CASE WHEN subq.dimensi_id = 1 THEN subq.avg END), 2) AS dimensi_1,
+                    ROUND(MAX(CASE WHEN subq.dimensi_id = 2 THEN subq.avg END), 2) AS dimensi_2,
+                    ROUND(MAX(CASE WHEN subq.dimensi_id = 3 THEN subq.avg END), 2) AS dimensi_3,
+                    ROUND(MAX(CASE WHEN subq.dimensi_id = 4 THEN subq.avg END), 2) AS dimensi_4,
+                    ROUND(MAX(CASE WHEN subq.dimensi_id = 5 THEN subq.avg END), 2) AS dimensi_5
+                    FROM (
+                        SELECT
+                            'max-01'as survey_key,
+                            'MAX INDUSTRI """+jenis_industri+"""' AS survey_name,
+                             i.id AS dimensi_id,
+                            ROUND(AVG((e.value->>'en_US')::int), 2) AS avg,
+                            'MAX """+jenis_industri+"""' as jenis_industri
+                        FROM survey_user_input_line AS a
+                        LEFT JOIN survey_question AS b ON a.question_id = b.id
+                        LEFT JOIN survey_user_input AS c ON c.id = a.user_input_id
+                        LEFT JOIN res_partner AS d ON d.id = c.partner_id
+                        LEFT JOIN survey_question_answer AS e ON e.id = a.suggested_answer_id
+                        LEFT JOIN res_users AS f ON f.partner_id = d.id
+                        LEFT JOIN hr_employee AS g ON g.user_id = f.id
+                        LEFT JOIN res_company AS h ON h.id = g.company_id
+                        LEFT JOIN rmi_param_dimensi AS i ON i.id = b.dimensi_names
+                        LEFT JOIN rmi_param_group AS j ON j.id = b.sub_dimensi_names
+                        LEFT JOIN survey_survey AS ss ON ss.id = a.survey_id
+                        WHERE c.state = 'done'
+                          AND a.suggested_answer_id IS NOT NULL AND ss.jenis_industri = '"""+jenis_industri+"""' -- parameter seusuaikan jenis industri pada servey yg di pilih
+                          AND ss.periode = '"""+periode+"""'
+                        GROUP BY i.name, survey_name, a.survey_id, j.id, i.id, ss.jenis_industri, ss.id
+                        ORDER BY j.id ASC
+                    ) AS subq
+                    GROUP BY subq.survey_name, subq.jenis_industri, subq.survey_key
+                    ORDER BY subq.survey_name
+                )
+                UNION ALL
+                (
+                        SELECT
+                        subq.survey_key,
+                        subq.survey_name,
+                        subq.jenis_industri,
+                        ROUND(MAX(CASE WHEN subq.dimensi_id = 1 THEN subq.avg END), 2) AS dimensi_1,
+                        ROUND(MAX(CASE WHEN subq.dimensi_id = 2 THEN subq.avg END), 2) AS dimensi_2,
+                        ROUND(MAX(CASE WHEN subq.dimensi_id = 3 THEN subq.avg END), 2) AS dimensi_3,
+                        ROUND(MAX(CASE WHEN subq.dimensi_id = 4 THEN subq.avg END), 2) AS dimensi_4,
+                        ROUND(MAX(CASE WHEN subq.dimensi_id = 5 THEN subq.avg END), 2) AS dimensi_5
+                    FROM (
+                        SELECT
+                            'max-02' as survey_key,
+                            'MAX ALL DATA' AS survey_name,
+                             i.id AS dimensi_id,
+                            ROUND(AVG((e.value->>'en_US')::int), 2) AS avg,
+                            'MAX ALL DATA' as jenis_industri
+                        FROM survey_user_input_line AS a
+                        LEFT JOIN survey_question AS b ON a.question_id = b.id
+                        LEFT JOIN survey_user_input AS c ON c.id = a.user_input_id
+                        LEFT JOIN res_partner AS d ON d.id = c.partner_id
+                        LEFT JOIN survey_question_answer AS e ON e.id = a.suggested_answer_id
+                        LEFT JOIN res_users AS f ON f.partner_id = d.id
+                        LEFT JOIN hr_employee AS g ON g.user_id = f.id
+                        LEFT JOIN res_company AS h ON h.id = g.company_id
+                        LEFT JOIN rmi_param_dimensi AS i ON i.id = b.dimensi_names
+                        LEFT JOIN rmi_param_group AS j ON j.id = b.sub_dimensi_names
+                        LEFT JOIN survey_survey AS ss ON ss.id = a.survey_id
+                        WHERE c.state = 'done'
+                          AND a.suggested_answer_id IS NOT NULL
+                          AND ss.periode = '"""+periode+"""'
+                        GROUP BY i.name, survey_name, a.survey_id, j.id, i.id, ss.jenis_industri, ss.id
+                        ORDER BY j.id ASC
+                    ) AS subq
+                    GROUP BY subq.survey_name, subq.jenis_industri, subq.survey_key
+                    ORDER BY subq.survey_name
+                )
+                UNION ALL
+                select
+                    'max-03' as survey_key,
+                    'MAX' as survey_name,
+                    'MAX' as jenis_industri,
+                    5 AS dimensi_1,
+                    5 AS dimensi_2,
+                    5 AS dimensi_3,
+                    5 AS dimensi_4,
+                    5 AS dimensi_5
+                       """
+            http.request.env.cr.execute(query)
+            fetched_data = http.request.env.cr.fetchall()
+            column_names = [desc[0] for desc in http.request.env.cr.description]
+            for row in fetched_data:
+                row_dict = dict(zip(column_names, row))
+                for key, value in row_dict.items():
+                    if isinstance(value, datetime):
+                        row_dict[key] = str(value)
+                data.append(row_dict)
+            body = {'status': True, 'message': 'OK', 'data': data}
+            statusCode = 200
+        except Exception as e:
+            errorMsg = f"An error occurred: {e}"
+            body = {
+                'status': False,
+                'message': errorMsg,
+                'execution_time': '0s'
+            }
+            statusCode = 500
+        return Response(json.dumps(body), headers=headers, status=statusCode)
