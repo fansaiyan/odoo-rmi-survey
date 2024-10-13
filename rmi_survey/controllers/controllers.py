@@ -1051,7 +1051,7 @@ class CustomAPIController(http.Controller):
         return Response(json.dumps(body), headers=headers, status=statusCode)
 
     @http.route('/api/report/chart1', website=False, auth='public', type="http", csrf=False, methods=['GET'])
-    def _aspek_dimensi_corporate(self, **kwargs):
+    def _chart1(self, **kwargs):
         survey_id = kwargs.get('survey_id')
         periode = kwargs.get('periode')
         jenis_industri = kwargs.get('jenis_industri')
