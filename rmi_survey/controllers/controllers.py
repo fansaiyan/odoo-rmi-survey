@@ -1590,3 +1590,542 @@ class CustomAPIController(http.Controller):
             }
             statusCode = 500
         return Response(json.dumps(body), headers=headers, status=statusCode)
+
+    @http.route('/api/report/chart4', website=False, auth='public', type="http", csrf=False, methods=['GET'])
+    def _chart4(self, **kwargs):
+        survey_id = kwargs.get('survey_id')
+        periode = kwargs.get('periode')
+        jenis_industri = kwargs.get('jenis_industri')
+        data = []
+        body = {}
+        statusCode = 200
+        origin = http.request.httprequest.headers.get('Origin')
+        headers = {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': origin,
+            'Access-Control-Allow-Credentials': 'true'
+        }
+        if not survey_id:
+            statusCode = 400
+            body = {
+                'status': False,
+                'message': 'Required parameter "survey_id" is missing'
+            }
+            return Response(json.dumps(body), headers=headers, status=statusCode)
+        try:
+            query = """
+                        (
+                            SELECT
+                                subq.survey_key,
+                                subq.survey_name,
+                                subq.jenis_industri,
+                                ROUND(AVG(CASE WHEN subq.parameter like '%Peningkatan kualitas kerangka Manajemen Risiko%' THEN subq.avg END), 2) AS parameter_1,
+                                ROUND(AVG(CASE WHEN subq.parameter like '%Rencana transformasi Enterprise Risk Management%' THEN subq.avg END), 2) AS parameter_2,
+                                ROUND(AVG(CASE WHEN subq.parameter like '%Peran Manajemen Risiko dalam penyusunan rencana%' THEN subq.avg END), 2) AS parameter_3,
+                                ROUND(AVG(CASE WHEN subq.parameter like '%Hubungan peran Manajemen Risiko terhadap pencapaian%' THEN subq.avg END), 2) AS parameter_4,
+                                ROUND(AVG(CASE WHEN subq.parameter like '%Kapasitas risiko%' THEN subq.avg END), 2) AS parameter_5,
+                                ROUND(AVG(CASE WHEN subq.parameter like '%Selera Risiko%' THEN subq.avg END), 2) AS parameter_6,
+                                ROUND(AVG(CASE WHEN subq.parameter like '%Komunikasi selera Risiko kepada pemangku%' THEN subq.avg END), 2) AS parameter_7,
+                                ROUND(AVG(CASE WHEN subq.parameter like '%Kebijakan Risiko%' THEN subq.avg END), 2) AS parameter_8,
+                                ROUND(AVG(CASE WHEN subq.parameter like '%Prosedur risiko%' THEN subq.avg END), 2) AS parameter_9,
+                                ROUND(AVG(CASE WHEN subq.parameter like '%Rencana darurat (contingency plan) dalam kondisi%' THEN subq.avg END), 2) AS parameter_10,
+                                ROUND(AVG(CASE WHEN subq.parameter like '%Reviu dan Stress test terhadap prosedur dan SOP%' THEN subq.avg END), 2) AS parameter_11,
+                                ROUND(AVG(CASE WHEN subq.parameter like '%Organ fungsi kepatuhan dan perannya%' THEN subq.avg END), 2) AS parameter_12,
+                                ROUND(AVG(CASE WHEN subq.parameter like '%Penerapan Kerangka Integrated Enterprise Risk Management (ERM)%' THEN subq.avg END), 2) AS parameter_13,
+                                ROUND(AVG(CASE WHEN subq.parameter like '%Efektivitas Pengendalian Intern%' THEN subq.avg END), 2) AS parameter_14
+                            FROM (
+                                select
+                                'sur-' || CAST(ss.id as TEXT) as survey_key,
+                                (ss.title->>'en_US')::varchar AS survey_name,
+                                ss.jenis_industri,
+                                (b.title->>'en_US')::varchar AS parameter,
+                                ROUND(AVG((e.value->>'en_US')::int), 2) AS avg
+                                from survey_user_input_line as a
+                                left join survey_question as b on a.question_id = b.id
+                                left join survey_user_input as c on c.id = a.user_input_id
+                                left join res_partner as d on d.id = c.partner_id
+                                left join survey_question_answer as e on e.id = a.suggested_answer_id
+                                left join res_users as f on f.partner_id = d.id
+                                left join hr_employee as g on g.user_id = f.id
+                                left join res_company as h on h.id = g.company_id
+                                left join rmi_param_dimensi as i on i.id = b.dimensi_names
+                                left join rmi_param_group as j on j.id = b.sub_dimensi_names
+                                left join survey_survey as ss on ss.id = a.survey_id
+                                where a.survey_id = """+survey_id+""" and c.state = 'done' and a.suggested_answer_id is not null
+                                and i.id = 3
+                                and ss.periode = '"""+periode+"""'
+                                GROUP BY a.question_id, parameter, i.name, j.name, survey_name, a.survey_id, ss.id
+                                ORDER BY a.question_id ASC
+                            ) AS subq
+                            GROUP BY subq.survey_name, subq.jenis_industri, subq.survey_key
+                            ORDER BY subq.survey_name
+                        )
+                        UNION ALL
+                        (
+                            SELECT
+                                subq.survey_key,
+                                subq.survey_name,
+                                subq.jenis_industri,
+                                ROUND(MAX(CASE WHEN subq.parameter like '%Peningkatan kualitas kerangka Manajemen Risiko%' THEN subq.avg END), 2) AS parameter_1,
+                                ROUND(MAX(CASE WHEN subq.parameter like '%Rencana transformasi Enterprise Risk Management%' THEN subq.avg END), 2) AS parameter_2,
+                                ROUND(MAX(CASE WHEN subq.parameter like '%Peran Manajemen Risiko dalam penyusunan rencana%' THEN subq.avg END), 2) AS parameter_3,
+                                ROUND(MAX(CASE WHEN subq.parameter like '%Hubungan peran Manajemen Risiko terhadap pencapaian%' THEN subq.avg END), 2) AS parameter_4,
+                                ROUND(MAX(CASE WHEN subq.parameter like '%Kapasitas risiko%' THEN subq.avg END), 2) AS parameter_5,
+                                ROUND(MAX(CASE WHEN subq.parameter like '%Selera Risiko%' THEN subq.avg END), 2) AS parameter_6,
+                                ROUND(MAX(CASE WHEN subq.parameter like '%Komunikasi selera Risiko kepada pemangku%' THEN subq.avg END), 2) AS parameter_7,
+                                ROUND(MAX(CASE WHEN subq.parameter like '%Kebijakan Risiko%' THEN subq.avg END), 2) AS parameter_8,
+                                ROUND(MAX(CASE WHEN subq.parameter like '%Prosedur risiko%' THEN subq.avg END), 2) AS parameter_9,
+                                ROUND(MAX(CASE WHEN subq.parameter like '%Rencana darurat (contingency plan) dalam kondisi%' THEN subq.avg END), 2) AS parameter_10,
+                                ROUND(MAX(CASE WHEN subq.parameter like '%Reviu dan Stress test terhadap prosedur dan SOP%' THEN subq.avg END), 2) AS parameter_11,
+                                ROUND(MAX(CASE WHEN subq.parameter like '%Organ fungsi kepatuhan dan perannya%' THEN subq.avg END), 2) AS parameter_12,
+                                ROUND(MAX(CASE WHEN subq.parameter like '%Penerapan Kerangka Integrated Enterprise Risk Management (ERM)%' THEN subq.avg END), 2) AS parameter_13,
+                                ROUND(MAX(CASE WHEN subq.parameter like '%Efektivitas Pengendalian Intern%' THEN subq.avg END), 2) AS parameter_14
+                            FROM (
+                                select
+                                'max-01'as survey_key,
+                                'MAX INDUSTRI """+jenis_industri+"""' AS survey_name,
+                                (b.title->>'en_US')::varchar AS parameter,
+                                'MAX """+jenis_industri+"""' as jenis_industri,
+                                ROUND(AVG((e.value->>'en_US')::int), 2) AS avg
+                                from survey_user_input_line as a
+                                left join survey_question as b on a.question_id = b.id
+                                left join survey_user_input as c on c.id = a.user_input_id
+                                left join res_partner as d on d.id = c.partner_id
+                                left join survey_question_answer as e on e.id = a.suggested_answer_id
+                                left join res_users as f on f.partner_id = d.id
+                                left join hr_employee as g on g.user_id = f.id
+                                left join res_company as h on h.id = g.company_id
+                                left join rmi_param_dimensi as i on i.id = b.dimensi_names
+                                left join rmi_param_group as j on j.id = b.sub_dimensi_names
+                                left join survey_survey as ss on ss.id = a.survey_id
+                                where c.state = 'done' and a.suggested_answer_id is not null
+                                and i.id = 3
+                                and ss.periode = '"""+periode+"""'
+                                and ss.jenis_industri = '"""+jenis_industri+"""'
+                                GROUP BY a.question_id, parameter, i.name, j.name, survey_name, a.survey_id, ss.id
+                                ORDER BY a.question_id ASC
+                            ) AS subq
+                            GROUP BY subq.survey_name, subq.jenis_industri, subq.survey_key
+                            ORDER BY subq.survey_name
+                        )
+                        UNION ALL
+                        (
+                            SELECT
+                                subq.survey_key,
+                                subq.survey_name,
+                                subq.jenis_industri,
+                                ROUND(MAX(CASE WHEN subq.parameter like '%Peningkatan kualitas kerangka Manajemen Risiko%' THEN subq.avg END), 2) AS parameter_1,
+                                ROUND(MAX(CASE WHEN subq.parameter like '%Rencana transformasi Enterprise Risk Management%' THEN subq.avg END), 2) AS parameter_2,
+                                ROUND(MAX(CASE WHEN subq.parameter like '%Peran Manajemen Risiko dalam penyusunan rencana%' THEN subq.avg END), 2) AS parameter_3,
+                                ROUND(MAX(CASE WHEN subq.parameter like '%Hubungan peran Manajemen Risiko terhadap pencapaian%' THEN subq.avg END), 2) AS parameter_4,
+                                ROUND(MAX(CASE WHEN subq.parameter like '%Kapasitas risiko%' THEN subq.avg END), 2) AS parameter_5,
+                                ROUND(MAX(CASE WHEN subq.parameter like '%Selera Risiko%' THEN subq.avg END), 2) AS parameter_6,
+                                ROUND(MAX(CASE WHEN subq.parameter like '%Komunikasi selera Risiko kepada pemangku%' THEN subq.avg END), 2) AS parameter_7,
+                                ROUND(MAX(CASE WHEN subq.parameter like '%Kebijakan Risiko%' THEN subq.avg END), 2) AS parameter_8,
+                                ROUND(MAX(CASE WHEN subq.parameter like '%Prosedur risiko%' THEN subq.avg END), 2) AS parameter_9,
+                                ROUND(MAX(CASE WHEN subq.parameter like '%Rencana darurat (contingency plan) dalam kondisi%' THEN subq.avg END), 2) AS parameter_10,
+                                ROUND(MAX(CASE WHEN subq.parameter like '%Reviu dan Stress test terhadap prosedur dan SOP%' THEN subq.avg END), 2) AS parameter_11,
+                                ROUND(MAX(CASE WHEN subq.parameter like '%Organ fungsi kepatuhan dan perannya%' THEN subq.avg END), 2) AS parameter_12,
+                                ROUND(MAX(CASE WHEN subq.parameter like '%Penerapan Kerangka Integrated Enterprise Risk Management (ERM)%' THEN subq.avg END), 2) AS parameter_13,
+                                ROUND(MAX(CASE WHEN subq.parameter like '%Efektivitas Pengendalian Intern%' THEN subq.avg END), 2) AS parameter_14
+                            FROM (
+                                select
+                                'max-01'as survey_key,
+                                'MAX ALL DATA' AS survey_name,
+                                (b.title->>'en_US')::varchar AS parameter,
+                                'MAX ALL DATA' as jenis_industri,
+                                ROUND(AVG((e.value->>'en_US')::int), 2) AS avg
+                                from survey_user_input_line as a
+                                left join survey_question as b on a.question_id = b.id
+                                left join survey_user_input as c on c.id = a.user_input_id
+                                left join res_partner as d on d.id = c.partner_id
+                                left join survey_question_answer as e on e.id = a.suggested_answer_id
+                                left join res_users as f on f.partner_id = d.id
+                                left join hr_employee as g on g.user_id = f.id
+                                left join res_company as h on h.id = g.company_id
+                                left join rmi_param_dimensi as i on i.id = b.dimensi_names
+                                left join rmi_param_group as j on j.id = b.sub_dimensi_names
+                                left join survey_survey as ss on ss.id = a.survey_id
+                                where c.state = 'done' and a.suggested_answer_id is not null
+                                and i.id = 3
+                                and ss.periode = '"""+periode+"""'
+                                GROUP BY a.question_id, parameter, i.name, j.name, survey_name, a.survey_id, ss.id
+                                ORDER BY a.question_id ASC
+                            ) AS subq
+                            GROUP BY subq.survey_name, subq.jenis_industri, subq.survey_key
+                            ORDER BY subq.survey_name
+                        )
+                        UNION ALL
+                        select
+                            'max-03' as survey_key,
+                            'MAX' as survey_name,
+                            'MAX' as jenis_industri,
+                            5 AS parameter_1,
+                            5 AS parameter_2,
+                            5 AS parameter_3,
+                            5 AS parameter_4,
+                            5 AS parameter_5,
+                            5 AS parameter_6,
+                            5 AS parameter_7,
+                            5 AS parameter_8,
+                            5 AS parameter_9,
+                            5 AS parameter_10,
+                            5 AS parameter_11,
+                            5 AS parameter_12,
+                            5 AS parameter_13,
+                            5 AS parameter_14
+                               """
+            http.request.env.cr.execute(query)
+            fetched_data = http.request.env.cr.fetchall()
+            column_names = [desc[0] for desc in http.request.env.cr.description]
+            for row in fetched_data:
+                row_dict = dict(zip(column_names, row))
+                for key, value in row_dict.items():
+                    if isinstance(value, datetime):
+                        row_dict[key] = str(value)
+                data.append(row_dict)
+            body = {'status': True, 'message': 'OK', 'data': data}
+            statusCode = 200
+        except Exception as e:
+            errorMsg = f"An error occurred: {e}"
+            body = {
+                'status': False,
+                'message': errorMsg,
+                'execution_time': '0s'
+            }
+            statusCode = 500
+        return Response(json.dumps(body), headers=headers, status=statusCode)
+
+    @http.route('/api/report/chart5', website=False, auth='public', type="http", csrf=False, methods=['GET'])
+    def _chart5(self, **kwargs):
+        survey_id = kwargs.get('survey_id')
+        periode = kwargs.get('periode')
+        jenis_industri = kwargs.get('jenis_industri')
+        data = []
+        body = {}
+        statusCode = 200
+        origin = http.request.httprequest.headers.get('Origin')
+        headers = {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': origin,
+            'Access-Control-Allow-Credentials': 'true'
+        }
+        if not survey_id:
+            statusCode = 400
+            body = {
+                'status': False,
+                'message': 'Required parameter "survey_id" is missing'
+            }
+            return Response(json.dumps(body), headers=headers, status=statusCode)
+        try:
+            query = """
+                    (
+                        SELECT
+                            subq.survey_key,
+                            subq.survey_name,
+                            subq.jenis_industri,
+                            ROUND(AVG(CASE WHEN subq.parameter like '%Identifikasi Risiko utama%' THEN subq.avg END), 2) AS parameter_1,
+                            ROUND(AVG(CASE WHEN subq.parameter like '%Pengukuran Risiko%' THEN subq.avg END), 2) AS parameter_2,
+                            ROUND(AVG(CASE WHEN subq.parameter like '%Kerangka proses pengukuran Risiko untuk prioritisasi Risiko%' THEN subq.avg END), 2) AS parameter_3,
+                            ROUND(AVG(CASE WHEN subq.parameter like '%Integrasi atas seluruh Risiko utama%' THEN subq.avg END), 2) AS parameter_4,
+                            ROUND(AVG(CASE WHEN subq.parameter like '%Aktivitas perlakuan terhadap Risiko utama%' THEN subq.avg END), 2) AS parameter_5,
+                            ROUND(AVG(CASE WHEN subq.parameter like '%Identifikasi dan pengelolaan eksposur Risiko yang berada diatas selera risiko%' THEN subq.avg END), 2) AS parameter_6,
+                            ROUND(AVG(CASE WHEN subq.parameter like '%Pelaporan Risiko melaporkan Risiko secara real-time%' THEN subq.avg END), 2) AS parameter_7
+                        FROM (
+                            select
+                            'sur-' || CAST(ss.id as TEXT) as survey_key,
+                            (ss.title->>'en_US')::varchar AS survey_name,
+                            ss.jenis_industri,
+                            (b.title->>'en_US')::varchar AS parameter,
+                            ROUND(AVG((e.value->>'en_US')::int), 2) AS avg
+                            from survey_user_input_line as a
+                            left join survey_question as b on a.question_id = b.id
+                            left join survey_user_input as c on c.id = a.user_input_id
+                            left join res_partner as d on d.id = c.partner_id
+                            left join survey_question_answer as e on e.id = a.suggested_answer_id
+                            left join res_users as f on f.partner_id = d.id
+                            left join hr_employee as g on g.user_id = f.id
+                            left join res_company as h on h.id = g.company_id
+                            left join rmi_param_dimensi as i on i.id = b.dimensi_names
+                            left join rmi_param_group as j on j.id = b.sub_dimensi_names
+                            left join survey_survey as ss on ss.id = a.survey_id
+                            where a.survey_id = """+survey_id+""" and c.state = 'done' and a.suggested_answer_id is not null
+                            and i.id = 4
+                            and ss.periode = '"""+periode+"""'
+                            GROUP BY a.question_id, parameter, i.name, j.name, survey_name, a.survey_id, ss.id
+                            ORDER BY a.question_id ASC
+                        ) AS subq
+                        GROUP BY subq.survey_name, subq.jenis_industri, subq.survey_key
+                        ORDER BY subq.survey_name
+                    )
+                    UNION ALL
+                    (
+                        SELECT
+                            subq.survey_key,
+                            subq.survey_name,
+                            subq.jenis_industri,
+                            ROUND(MAX(CASE WHEN subq.parameter like '%Identifikasi Risiko utama%' THEN subq.avg END), 2) AS parameter_1,
+                            ROUND(MAX(CASE WHEN subq.parameter like '%Pengukuran Risiko%' THEN subq.avg END), 2) AS parameter_2,
+                            ROUND(MAX(CASE WHEN subq.parameter like '%Kerangka proses pengukuran Risiko untuk prioritisasi Risiko%' THEN subq.avg END), 2) AS parameter_3,
+                            ROUND(MAX(CASE WHEN subq.parameter like '%Integrasi atas seluruh Risiko utama%' THEN subq.avg END), 2) AS parameter_4,
+                            ROUND(MAX(CASE WHEN subq.parameter like '%Aktivitas perlakuan terhadap Risiko utama%' THEN subq.avg END), 2) AS parameter_5,
+                            ROUND(MAX(CASE WHEN subq.parameter like '%Identifikasi dan pengelolaan eksposur Risiko yang berada diatas selera risiko%' THEN subq.avg END), 2) AS parameter_6,
+                            ROUND(MAX(CASE WHEN subq.parameter like '%Pelaporan Risiko melaporkan Risiko secara real-time%' THEN subq.avg END), 2) AS parameter_7
+                        FROM (
+                            select
+                            'max-01'as survey_key,
+                            'MAX INDUSTRI """+jenis_industri+"""' AS survey_name,
+                            (b.title->>'en_US')::varchar AS parameter,
+                            'MAX """+jenis_industri+"""' as jenis_industri,
+                            ROUND(AVG((e.value->>'en_US')::int), 2) AS avg
+                            from survey_user_input_line as a
+                            left join survey_question as b on a.question_id = b.id
+                            left join survey_user_input as c on c.id = a.user_input_id
+                            left join res_partner as d on d.id = c.partner_id
+                            left join survey_question_answer as e on e.id = a.suggested_answer_id
+                            left join res_users as f on f.partner_id = d.id
+                            left join hr_employee as g on g.user_id = f.id
+                            left join res_company as h on h.id = g.company_id
+                            left join rmi_param_dimensi as i on i.id = b.dimensi_names
+                            left join rmi_param_group as j on j.id = b.sub_dimensi_names
+                            left join survey_survey as ss on ss.id = a.survey_id
+                            where c.state = 'done' and a.suggested_answer_id is not null
+                            and i.id = 4
+                            and ss.periode = '"""+periode+"""'
+                            and ss.jenis_industri = '"""+jenis_industri+"""'
+                            GROUP BY a.question_id, parameter, i.name, j.name, survey_name, a.survey_id, ss.id
+                            ORDER BY a.question_id ASC
+                        ) AS subq
+                        GROUP BY subq.survey_name, subq.jenis_industri, subq.survey_key
+                        ORDER BY subq.survey_name
+                    )
+                    UNION ALL
+                    (
+                        SELECT
+                            subq.survey_key,
+                            subq.survey_name,
+                            subq.jenis_industri,
+                            ROUND(MAX(CASE WHEN subq.parameter like '%Identifikasi Risiko utama%' THEN subq.avg END), 2) AS parameter_1,
+                            ROUND(MAX(CASE WHEN subq.parameter like '%Pengukuran Risiko%' THEN subq.avg END), 2) AS parameter_2,
+                            ROUND(MAX(CASE WHEN subq.parameter like '%Kerangka proses pengukuran Risiko untuk prioritisasi Risiko%' THEN subq.avg END), 2) AS parameter_3,
+                            ROUND(MAX(CASE WHEN subq.parameter like '%Integrasi atas seluruh Risiko utama%' THEN subq.avg END), 2) AS parameter_4,
+                            ROUND(MAX(CASE WHEN subq.parameter like '%Aktivitas perlakuan terhadap Risiko utama%' THEN subq.avg END), 2) AS parameter_5,
+                            ROUND(MAX(CASE WHEN subq.parameter like '%Identifikasi dan pengelolaan eksposur Risiko yang berada diatas selera risiko%' THEN subq.avg END), 2) AS parameter_6,
+                            ROUND(MAX(CASE WHEN subq.parameter like '%Pelaporan Risiko melaporkan Risiko secara real-time%' THEN subq.avg END), 2) AS parameter_7
+                        FROM (
+                            select
+                            'max-01'as survey_key,
+                            'MAX ALL DATA' AS survey_name,
+                            (b.title->>'en_US')::varchar AS parameter,
+                            'MAX ALL DATA' as jenis_industri,
+                            ROUND(AVG((e.value->>'en_US')::int), 2) AS avg
+                            from survey_user_input_line as a
+                            left join survey_question as b on a.question_id = b.id
+                            left join survey_user_input as c on c.id = a.user_input_id
+                            left join res_partner as d on d.id = c.partner_id
+                            left join survey_question_answer as e on e.id = a.suggested_answer_id
+                            left join res_users as f on f.partner_id = d.id
+                            left join hr_employee as g on g.user_id = f.id
+                            left join res_company as h on h.id = g.company_id
+                            left join rmi_param_dimensi as i on i.id = b.dimensi_names
+                            left join rmi_param_group as j on j.id = b.sub_dimensi_names
+                            left join survey_survey as ss on ss.id = a.survey_id
+                            where c.state = 'done' and a.suggested_answer_id is not null
+                            and i.id = 4
+                            and ss.periode = '"""+periode+"""'
+                            GROUP BY a.question_id, parameter, i.name, j.name, survey_name, a.survey_id, ss.id
+                            ORDER BY a.question_id ASC
+                        ) AS subq
+                        GROUP BY subq.survey_name, subq.jenis_industri, subq.survey_key
+                        ORDER BY subq.survey_name
+                    )
+                    UNION ALL
+                    select
+                        'max-03' as survey_key,
+                        'MAX' as survey_name,
+                        'MAX' as jenis_industri,
+                        5 AS parameter_1,
+                        5 AS parameter_2,
+                        5 AS parameter_3,
+                        5 AS parameter_4,
+                        5 AS parameter_5,
+                        5 AS parameter_6,
+                        5 AS parameter_7
+                                   """
+            http.request.env.cr.execute(query)
+            fetched_data = http.request.env.cr.fetchall()
+            column_names = [desc[0] for desc in http.request.env.cr.description]
+            for row in fetched_data:
+                row_dict = dict(zip(column_names, row))
+                for key, value in row_dict.items():
+                    if isinstance(value, datetime):
+                        row_dict[key] = str(value)
+                data.append(row_dict)
+            body = {'status': True, 'message': 'OK', 'data': data}
+            statusCode = 200
+        except Exception as e:
+            errorMsg = f"An error occurred: {e}"
+            body = {
+                'status': False,
+                'message': errorMsg,
+                'execution_time': '0s'
+            }
+            statusCode = 500
+        return Response(json.dumps(body), headers=headers, status=statusCode)
+
+    @http.route('/api/report/chart6', website=False, auth='public', type="http", csrf=False, methods=['GET'])
+    def _chart6(self, **kwargs):
+        survey_id = kwargs.get('survey_id')
+        periode = kwargs.get('periode')
+        jenis_industri = kwargs.get('jenis_industri')
+        data = []
+        body = {}
+        statusCode = 200
+        origin = http.request.httprequest.headers.get('Origin')
+        headers = {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': origin,
+            'Access-Control-Allow-Credentials': 'true'
+        }
+        if not survey_id:
+            statusCode = 400
+            body = {
+                'status': False,
+                'message': 'Required parameter "survey_id" is missing'
+            }
+            return Response(json.dumps(body), headers=headers, status=statusCode)
+        try:
+            query = """
+                    (
+                        SELECT
+                            subq.survey_key,
+                            subq.survey_name,
+                            subq.jenis_industri,
+                            ROUND(AVG(CASE WHEN subq.parameter like '%Data Risiko%' THEN subq.avg END), 2) AS parameter_1,
+                            ROUND(AVG(CASE WHEN subq.parameter like '%Permodelan dan Teknologi Risiko%' THEN subq.avg END), 2) AS parameter_2
+                        FROM (
+                            select
+                            'sur-' || CAST(ss.id as TEXT) as survey_key,
+                            (ss.title->>'en_US')::varchar AS survey_name,
+                            ss.jenis_industri,
+                            (b.title->>'en_US')::varchar AS parameter,
+                            ROUND(AVG((e.value->>'en_US')::int), 2) AS avg
+                            from survey_user_input_line as a
+                            left join survey_question as b on a.question_id = b.id
+                            left join survey_user_input as c on c.id = a.user_input_id
+                            left join res_partner as d on d.id = c.partner_id
+                            left join survey_question_answer as e on e.id = a.suggested_answer_id
+                            left join res_users as f on f.partner_id = d.id
+                            left join hr_employee as g on g.user_id = f.id
+                            left join res_company as h on h.id = g.company_id
+                            left join rmi_param_dimensi as i on i.id = b.dimensi_names
+                            left join rmi_param_group as j on j.id = b.sub_dimensi_names
+                            left join survey_survey as ss on ss.id = a.survey_id
+                            where a.survey_id = """+survey_id+""" and c.state = 'done' and a.suggested_answer_id is not null
+                            and i.id = 5
+                            and ss.periode = '"""+periode+"""'
+                            GROUP BY a.question_id, parameter, i.name, j.name, survey_name, a.survey_id, ss.id
+                            ORDER BY a.question_id ASC
+                        ) AS subq
+                        GROUP BY subq.survey_name, subq.jenis_industri, subq.survey_key
+                        ORDER BY subq.survey_name
+                    )
+                    UNION ALL
+                    (
+                        SELECT
+                            subq.survey_key,
+                            subq.survey_name,
+                            subq.jenis_industri,
+                            ROUND(MAX(CASE WHEN subq.parameter like '%Data Risiko%' THEN subq.avg END), 2) AS parameter_1,
+                            ROUND(MAX(CASE WHEN subq.parameter like '%Permodelan dan Teknologi Risiko%' THEN subq.avg END), 2) AS parameter_2
+                        FROM (
+                            select
+                            'max-01'as survey_key,
+                            'MAX INDUSTRI """+jenis_industri+"""' AS survey_name,
+                            (b.title->>'en_US')::varchar AS parameter,
+                            'MAX """+jenis_industri+"""' as jenis_industri,
+                            ROUND(AVG((e.value->>'en_US')::int), 2) AS avg
+                            from survey_user_input_line as a
+                            left join survey_question as b on a.question_id = b.id
+                            left join survey_user_input as c on c.id = a.user_input_id
+                            left join res_partner as d on d.id = c.partner_id
+                            left join survey_question_answer as e on e.id = a.suggested_answer_id
+                            left join res_users as f on f.partner_id = d.id
+                            left join hr_employee as g on g.user_id = f.id
+                            left join res_company as h on h.id = g.company_id
+                            left join rmi_param_dimensi as i on i.id = b.dimensi_names
+                            left join rmi_param_group as j on j.id = b.sub_dimensi_names
+                            left join survey_survey as ss on ss.id = a.survey_id
+                            where c.state = 'done' and a.suggested_answer_id is not null
+                            and i.id = 5
+                            and ss.periode = '"""+periode+"""'
+                            and ss.jenis_industri = '"""+jenis_industri+"""'
+                            GROUP BY a.question_id, parameter, i.name, j.name, survey_name, a.survey_id, ss.id
+                            ORDER BY a.question_id ASC
+                        ) AS subq
+                        GROUP BY subq.survey_name, subq.jenis_industri, subq.survey_key
+                        ORDER BY subq.survey_name
+                    )
+                    UNION ALL
+                    (
+                        SELECT
+                            subq.survey_key,
+                            subq.survey_name,
+                            subq.jenis_industri,
+                            ROUND(MAX(CASE WHEN subq.parameter like '%Data Risiko%' THEN subq.avg END), 2) AS parameter_1,
+                            ROUND(MAX(CASE WHEN subq.parameter like '%Permodelan dan Teknologi Risiko%' THEN subq.avg END), 2) AS parameter_2
+                        FROM (
+                            select
+                            'max-01'as survey_key,
+                            'MAX ALL DATA' AS survey_name,
+                            (b.title->>'en_US')::varchar AS parameter,
+                            'MAX ALL DATA' as jenis_industri,
+                            ROUND(AVG((e.value->>'en_US')::int), 2) AS avg
+                            from survey_user_input_line as a
+                            left join survey_question as b on a.question_id = b.id
+                            left join survey_user_input as c on c.id = a.user_input_id
+                            left join res_partner as d on d.id = c.partner_id
+                            left join survey_question_answer as e on e.id = a.suggested_answer_id
+                            left join res_users as f on f.partner_id = d.id
+                            left join hr_employee as g on g.user_id = f.id
+                            left join res_company as h on h.id = g.company_id
+                            left join rmi_param_dimensi as i on i.id = b.dimensi_names
+                            left join rmi_param_group as j on j.id = b.sub_dimensi_names
+                            left join survey_survey as ss on ss.id = a.survey_id
+                            where c.state = 'done' and a.suggested_answer_id is not null
+                            and i.id = 5
+                            and ss.periode = '"""+periode+"""'
+                            GROUP BY a.question_id, parameter, i.name, j.name, survey_name, a.survey_id, ss.id
+                            ORDER BY a.question_id ASC
+                        ) AS subq
+                        GROUP BY subq.survey_name, subq.jenis_industri, subq.survey_key
+                        ORDER BY subq.survey_name
+                    )
+                    UNION ALL
+                    select
+                        'max-03' as survey_key,
+                        'MAX' as survey_name,
+                        'MAX' as jenis_industri,
+                        5 AS parameter_1,
+                        5 AS parameter_2
+                                       """
+            http.request.env.cr.execute(query)
+            fetched_data = http.request.env.cr.fetchall()
+            column_names = [desc[0] for desc in http.request.env.cr.description]
+            for row in fetched_data:
+                row_dict = dict(zip(column_names, row))
+                for key, value in row_dict.items():
+                    if isinstance(value, datetime):
+                        row_dict[key] = str(value)
+                data.append(row_dict)
+            body = {'status': True, 'message': 'OK', 'data': data}
+            statusCode = 200
+        except Exception as e:
+            errorMsg = f"An error occurred: {e}"
+            body = {
+                'status': False,
+                'message': errorMsg,
+                'execution_time': '0s'
+            }
+            statusCode = 500
+        return Response(json.dumps(body), headers=headers, status=statusCode)
