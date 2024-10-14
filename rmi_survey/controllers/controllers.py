@@ -853,7 +853,7 @@ class CustomAPIController(http.Controller):
                             subq.parameter,
                             subq.dimensi,
                             subq.deskripsi,
-                            ROUND(avg(subq.minvalue::int), 2) as skordimensi,
+                            ROUND(AVG(subq.minvalue), 2) AS skordimensi
                             subq.skor_max
                             from
                             (
@@ -867,7 +867,7 @@ class CustomAPIController(http.Controller):
                                     END as parameter,
                                     i.param_dimensi_id as dimensi,
                                     i.name as deskripsi,
-                                    min((e.value->>'en_US')::int) as minvalue,
+                                    ROUND(MIN((e.value->>'en_US')::int), 2) AS minvalue,
                                     5 as skor_max
                                     from survey_user_input_line as a
                                     left join survey_question as b on a.question_id = b.id
