@@ -472,7 +472,7 @@ class CustomAPIController(http.Controller):
                         subq.company,
                         subq.dimensi,
                         subq.dimensi_id,
-                        ROUND(avg(subq.avg), 2) as avg
+                        ROUND(AVG(subq.avg::int), 2) as avg
                         from
                         (
                             select
@@ -481,7 +481,7 @@ class CustomAPIController(http.Controller):
                                 h.name as company,
                                 i.name as dimensi,
                                 i.id as dimensi_id,
-                                avg((e.value->>'en_US')::int) as avg
+                                ROUND(AVG((e.value->>'en_US')::int), 2) AS avg
                                 from survey_user_input_line as a
                                 left join survey_question as b on a.question_id = b.id
                                 left join survey_user_input as c on c.id = a.user_input_id
