@@ -472,7 +472,7 @@ class CustomAPIController(http.Controller):
                         subq.company,
                         subq.dimensi,
                         subq.dimensi_id,
-                        ROUND(AVG(subq.avg::int), 2) as avg
+                        ROUND(AVG(subq.avg), 2) AS avg
                         from
                         (
                             select
