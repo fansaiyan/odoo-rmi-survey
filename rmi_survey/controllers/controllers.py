@@ -853,7 +853,7 @@ class CustomAPIController(http.Controller):
                             subq.parameter,
                             subq.dimensi,
                             subq.deskripsi,
-                            ROUND(AVG(subq.minvalue), 2) AS skordimensi
+                            ROUND(AVG(subq.minvalue), 2) AS skordimensi,
                             subq.skor_max
                             from
                             (
