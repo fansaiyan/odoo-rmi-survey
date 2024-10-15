@@ -2129,3 +2129,68 @@ class CustomAPIController(http.Controller):
             }
             statusCode = 500
         return Response(json.dumps(body), headers=headers, status=statusCode)
+
+    @http.route('/api/report/ofi', website=False, auth='public', type="http", csrf=False, methods=['GET'])
+    def _ofi(self, **kwargs):
+        survey_id = kwargs.get('survey_id')
+        data = []
+        body = {}
+        statusCode = 200
+        origin = http.request.httprequest.headers.get('Origin')
+        headers = {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': origin,
+            'Access-Control-Allow-Credentials': 'true'
+        }
+        if not survey_id:
+            statusCode = 400
+            body = {
+                'status': False,
+                'message': 'Required parameter "survey_id" is missing'
+            }
+            return Response(json.dumps(body), headers=headers, status=statusCode)
+        try:
+            query = """
+                     select
+                        ROW_NUMBER() OVER () AS no,
+                         a.survey_id,
+                        (ss.title->>'en_US')::varchar AS survey_name,
+                        i.id as dimensi_id,
+                        i.name as dimensi,
+                        j.name as subdimensi,
+                        (b.title->>'en_US')::varchar AS parameterName,
+                        min((e.value->>'en_US')::int) as minvalue
+                        from survey_user_input_line as a
+                        left join survey_question as b on a.question_id = b.id
+                        left join survey_user_input as c on c.id = a.user_input_id
+                        left join res_partner as d on d.id = c.partner_id
+                        left join survey_question_answer as e on e.id = a.suggested_answer_id
+                        left join res_users as f on f.partner_id = d.id
+                        left join hr_employee as g on g.user_id = f.id
+                        left join res_company as h on h.id = g.company_id
+                        left join rmi_param_dimensi as i on i.id = b.dimensi_names
+                        left join rmi_param_group as j on j.id = b.sub_dimensi_names
+                        left join survey_survey as ss on ss.id = a.survey_id
+                    where a.survey_id = """+survey_id+""" and c.state = 'done' and a.suggested_answer_id is not null
+                    GROUP BY b.id, parameterName, i.name, j.name, survey_name, a.survey_id, dimensi_id
+                    ORDER BY b.id ASC"""
+            http.request.env.cr.execute(query)
+            fetched_data = http.request.env.cr.fetchall()
+            column_names = [desc[0] for desc in http.request.env.cr.description]
+            for row in fetched_data:
+                row_dict = dict(zip(column_names, row))
+                for key, value in row_dict.items():
+                    if isinstance(value, datetime):
+                        row_dict[key] = str(value)
+                data.append(row_dict)
+            body = {'status': True, 'message': 'OK', 'data': data}
+            statusCode = 200
+        except Exception as e:
+            errorMsg = f"An error occurred: {e}"
+            body = {
+                'status': False,
+                'message': errorMsg,
+                'execution_time': '0s'
+            }
+            statusCode = 500
+        return Response(json.dumps(body), headers=headers, status=statusCode)
