@@ -2155,6 +2155,8 @@ class CustomAPIController(http.Controller):
                         ROW_NUMBER() OVER () AS no,
                          a.survey_id,
                         (ss.title->>'en_US')::varchar AS survey_name,
+                        ss.periode,
+                        ss.jenis_industri,
                         i.id as dimensi_id,
                         i.name as dimensi,
                         j.name as subdimensi,
@@ -2172,7 +2174,7 @@ class CustomAPIController(http.Controller):
                         left join rmi_param_group as j on j.id = b.sub_dimensi_names
                         left join survey_survey as ss on ss.id = a.survey_id
                     where a.survey_id = """+survey_id+""" and c.state = 'done' and a.suggested_answer_id is not null
-                    GROUP BY b.id, parameterName, i.name, j.name, survey_name, a.survey_id, dimensi_id
+                    GROUP BY b.id, parameterName, i.name, j.name, survey_name, a.survey_id, dimensi_id, ss.periode,ss.jenis_industri
                     ORDER BY b.id ASC"""
             http.request.env.cr.execute(query)
             fetched_data = http.request.env.cr.fetchall()
