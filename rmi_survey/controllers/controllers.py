@@ -466,39 +466,39 @@ class CustomAPIController(http.Controller):
         try:
             query = """
                       select
-                        ROW_NUMBER() OVER () AS no,
-                        subq.survey_name,
-                        subq.survey_id,
-                        subq.company,
-                        subq.dimensi,
-                        subq.dimensi_id,
-                        ROUND(AVG(subq.avg), 2) AS avg
-                        from
-                        (
-                            select
-                                (ss.title->>'en_US')::varchar AS survey_name,
-                                a.survey_id,
-                                h.name as company,
-                                i.name as dimensi,
-                                i.id as dimensi_id,
-                                ROUND(AVG((e.value->>'en_US')::int), 2) AS avg
-                                from survey_user_input_line as a
-                                left join survey_question as b on a.question_id = b.id
-                                left join survey_user_input as c on c.id = a.user_input_id
-                                left join res_partner as d on d.id = c.partner_id
-                                left join survey_question_answer as e on e.id = a.suggested_answer_id
-                                left join res_users as f on f.partner_id = d.id
-                                left join hr_employee as g on g.user_id = f.id
-                                left join res_company as h on h.id = g.company_id
-                                left join rmi_param_dimensi as i on i.id = b.dimensi_names
-                                left join rmi_param_group as j on j.id = b.sub_dimensi_names
-                                left join survey_survey as ss on ss.id = a.survey_id
-                            where a.survey_id = {} and c.state = 'done' and a.suggested_answer_id is not null
-                            GROUP BY company, i.name, j.name, survey_name, a.survey_id, j.id, i.id
-                            ORDER BY j.id ASC
-                        ) as subq
-                    GROUP BY subq.survey_name, subq.survey_id, subq.company, subq.dimensi, subq.dimensi_id
-                    ORDER BY subq.dimensi_id
+                            ROW_NUMBER() OVER () AS no,
+                            subq.survey_name,
+                            subq.survey_id,
+                            subq.company,
+                            subq.dimensi,
+                            subq.dimensi_id,
+                            ROUND(AVG(subq.avg), 2) AS avg
+                            from
+                            (
+                                select
+                                    (ss.title->>'en_US')::varchar AS survey_name,
+                                    a.survey_id,
+                                    h.name as company,
+                                    i.name as dimensi,
+                                    i.id as dimensi_id,
+                                    ROUND(MIN((e.value->>'en_US')::int), 2) AS avg
+                                    from survey_user_input_line as a
+                                    left join survey_question as b on a.question_id = b.id
+                                    left join survey_user_input as c on c.id = a.user_input_id
+                                    left join res_partner as d on d.id = c.partner_id
+                                    left join survey_question_answer as e on e.id = a.suggested_answer_id
+                                    left join res_users as f on f.partner_id = d.id
+                                    left join hr_employee as g on g.user_id = f.id
+                                    left join res_company as h on h.id = g.company_id
+                                    left join rmi_param_dimensi as i on i.id = b.dimensi_names
+                                    left join rmi_param_group as j on j.id = b.sub_dimensi_names
+                                    left join survey_survey as ss on ss.id = a.survey_id
+                                where a.survey_id = {} and c.state = 'done' and a.suggested_answer_id is not null
+                                GROUP BY a.question_id, i.name, j.name, a.survey_id, j.id, i.id, ss.title, h.name
+                                ORDER BY a.question_id ASC
+                            ) as subq
+                        GROUP BY subq.survey_name, subq.survey_id, subq.company, subq.dimensi, subq.dimensi_id
+                        ORDER BY subq.dimensi_id
                        """.format(survey_id)
             http.request.env.cr.execute(query)
             fetched_data = http.request.env.cr.fetchall()
