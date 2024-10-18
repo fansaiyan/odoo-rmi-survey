@@ -2200,6 +2200,7 @@ class CustomAPIController(http.Controller):
     @http.route('/api/report/all-survey-data', website=False, auth='public', type="http", csrf=False,
                 methods=['GET'])
     def _all_survey_data(self, **kwargs):
+        periode = kwargs.get('survey_id')
         data = []
         origin = http.request.httprequest.headers.get('Origin')
         headers = {
@@ -2207,6 +2208,13 @@ class CustomAPIController(http.Controller):
             'Access-Control-Allow-Origin': origin,
             'Access-Control-Allow-Credentials': 'true'
         }
+        if not periode:
+            statusCode = 400
+            body = {
+                'status': False,
+                'message': 'Required parameter "periode" is missing'
+            }
+            return Response(json.dumps(body), headers=headers, status=statusCode)
         try:
             query = """
                       select
@@ -2215,6 +2223,8 @@ class CustomAPIController(http.Controller):
                         sub.survey_name,
                         sub.question_id,
                         sub.company,
+                        sub.jenis_industri,
+                        sub.periode,
                         sub.dimensi_id,
                         sub.dimensi,
                         sub.subdimensi_id,
@@ -2230,6 +2240,8 @@ class CustomAPIController(http.Controller):
                                 a.question_id ,
                                 a.survey_id,
                                 h.name as company,
+                                ss.jenis_industri,
+                                ss.periode,
                                 i.name as dimensi,
                                 i.id as dimensi_id,
                                 j.name as subdimensi,
@@ -2253,9 +2265,9 @@ class CustomAPIController(http.Controller):
                                 left join hr_department as hr on hr.id = g.department_id
                                 left join survey_user_input_line as sqa on sqa.question_id = a.question_id and sqa.suggested_answer_id is null and sqa.write_uid = f.id
                                 where
-                                    c.state = 'done' and a.suggested_answer_id is not null
+                                    c.state = 'done' and a.suggested_answer_id is not null and ss.periode = {}
                                 order by survey_id, d.company_id, question_id
-                    ) as sub"""
+                    ) as sub""".format(periode)
             http.request.env.cr.execute(query)
             fetched_data = http.request.env.cr.fetchall()
             column_names = [desc[0] for desc in http.request.env.cr.description]
