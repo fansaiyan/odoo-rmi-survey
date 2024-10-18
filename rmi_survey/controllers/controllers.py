@@ -1125,7 +1125,7 @@ class CustomAPIController(http.Controller):
                             'max-01'as survey_key,
                             'MAX INDUSTRI """+jenis_industri+"""' AS survey_name,
                              i.id AS dimensi_id,
-                            ROUND(AVG((e.value->>'en_US')::int), 2) AS avg,
+                            ROUND(MAX((e.value->>'en_US')::int), 2) AS avg,
                             'MAX """+jenis_industri+"""' as jenis_industri
                         FROM survey_user_input_line AS a
                         LEFT JOIN survey_question AS b ON a.question_id = b.id
@@ -1163,7 +1163,7 @@ class CustomAPIController(http.Controller):
                             'max-02' as survey_key,
                             'MAX ALL DATA' AS survey_name,
                              i.id AS dimensi_id,
-                            ROUND(AVG((e.value->>'en_US')::int), 2) AS avg,
+                            ROUND(MAX((e.value->>'en_US')::int), 2) AS avg,
                             'MAX ALL DATA' as jenis_industri
                         FROM survey_user_input_line AS a
                         LEFT JOIN survey_question AS b ON a.question_id = b.id
@@ -1290,7 +1290,7 @@ class CustomAPIController(http.Controller):
                         'MAX INDUSTRI """+jenis_industri+"""' AS survey_name,
                         (b.title->>'en_US')::varchar AS parameter,
                         'MAX """+jenis_industri+"""' as jenis_industri,
-                        ROUND(AVG((e.value->>'en_US')::int), 2) AS avg
+                        ROUND(MAX((e.value->>'en_US')::int), 2) AS avg
                         from survey_user_input_line as a
                         left join survey_question as b on a.question_id = b.id
                         left join survey_user_input as c on c.id = a.user_input_id
@@ -1327,7 +1327,7 @@ class CustomAPIController(http.Controller):
                         'MAX ALL DATA' AS survey_name,
                         (b.title->>'en_US')::varchar AS parameter,
                         'MAX ALL DATA' as jenis_industri,
-                        ROUND(AVG((e.value->>'en_US')::int), 2) AS avg
+                        ROUND(MAX((e.value->>'en_US')::int), 2) AS avg
                         from survey_user_input_line as a
                         left join survey_question as b on a.question_id = b.id
                         left join survey_user_input as c on c.id = a.user_input_id
@@ -1477,7 +1477,7 @@ class CustomAPIController(http.Controller):
                             'MAX INDUSTRI """+jenis_industri+"""' AS survey_name,
                             (b.title->>'en_US')::varchar AS parameter,
                             'MAX """+jenis_industri+"""' as jenis_industri,
-                            ROUND(AVG((e.value->>'en_US')::int), 2) AS avg
+                            ROUND(MAX((e.value->>'en_US')::int), 2) AS avg
                             from survey_user_input_line as a
                             left join survey_question as b on a.question_id = b.id
                             left join survey_user_input as c on c.id = a.user_input_id
@@ -1527,7 +1527,7 @@ class CustomAPIController(http.Controller):
                             'MAX ALL DATA' AS survey_name,
                             (b.title->>'en_US')::varchar AS parameter,
                             'MAX ALL DATA' as jenis_industri,
-                            ROUND(AVG((e.value->>'en_US')::int), 2) AS avg
+                            ROUND(MAX((e.value->>'en_US')::int), 2) AS avg
                             from survey_user_input_line as a
                             left join survey_question as b on a.question_id = b.id
                             left join survey_user_input as c on c.id = a.user_input_id
@@ -1686,7 +1686,7 @@ class CustomAPIController(http.Controller):
                                 'MAX INDUSTRI """+jenis_industri+"""' AS survey_name,
                                 (b.title->>'en_US')::varchar AS parameter,
                                 'MAX """+jenis_industri+"""' as jenis_industri,
-                                ROUND(AVG((e.value->>'en_US')::int), 2) AS avg
+                                ROUND(MAX((e.value->>'en_US')::int), 2) AS avg
                                 from survey_user_input_line as a
                                 left join survey_question as b on a.question_id = b.id
                                 left join survey_user_input as c on c.id = a.user_input_id
@@ -1734,7 +1734,7 @@ class CustomAPIController(http.Controller):
                                 'MAX ALL DATA' AS survey_name,
                                 (b.title->>'en_US')::varchar AS parameter,
                                 'MAX ALL DATA' as jenis_industri,
-                                ROUND(AVG((e.value->>'en_US')::int), 2) AS avg
+                                ROUND(MAX((e.value->>'en_US')::int), 2) AS avg
                                 from survey_user_input_line as a
                                 left join survey_question as b on a.question_id = b.id
                                 left join survey_user_input as c on c.id = a.user_input_id
@@ -1877,7 +1877,7 @@ class CustomAPIController(http.Controller):
                             'MAX INDUSTRI """+jenis_industri+"""' AS survey_name,
                             (b.title->>'en_US')::varchar AS parameter,
                             'MAX """+jenis_industri+"""' as jenis_industri,
-                            ROUND(AVG((e.value->>'en_US')::int), 2) AS avg
+                            ROUND(MAX((e.value->>'en_US')::int), 2) AS avg
                             from survey_user_input_line as a
                             left join survey_question as b on a.question_id = b.id
                             left join survey_user_input as c on c.id = a.user_input_id
@@ -1918,7 +1918,7 @@ class CustomAPIController(http.Controller):
                             'MAX ALL DATA' AS survey_name,
                             (b.title->>'en_US')::varchar AS parameter,
                             'MAX ALL DATA' as jenis_industri,
-                            ROUND(AVG((e.value->>'en_US')::int), 2) AS avg
+                            ROUND(MAX((e.value->>'en_US')::int), 2) AS avg
                             from survey_user_input_line as a
                             left join survey_question as b on a.question_id = b.id
                             left join survey_user_input as c on c.id = a.user_input_id
@@ -2044,7 +2044,7 @@ class CustomAPIController(http.Controller):
                             'MAX INDUSTRI """+jenis_industri+"""' AS survey_name,
                             (b.title->>'en_US')::varchar AS parameter,
                             'MAX """+jenis_industri+"""' as jenis_industri,
-                            ROUND(AVG((e.value->>'en_US')::int), 2) AS avg
+                            ROUND(MAX((e.value->>'en_US')::int), 2) AS avg
                             from survey_user_input_line as a
                             left join survey_question as b on a.question_id = b.id
                             left join survey_user_input as c on c.id = a.user_input_id
@@ -2080,7 +2080,7 @@ class CustomAPIController(http.Controller):
                             'MAX ALL DATA' AS survey_name,
                             (b.title->>'en_US')::varchar AS parameter,
                             'MAX ALL DATA' as jenis_industri,
-                            ROUND(AVG((e.value->>'en_US')::int), 2) AS avg
+                            ROUND(MAX((e.value->>'en_US')::int), 2) AS avg
                             from survey_user_input_line as a
                             left join survey_question as b on a.question_id = b.id
                             left join survey_user_input as c on c.id = a.user_input_id
