@@ -2265,9 +2265,9 @@ class CustomAPIController(http.Controller):
                                 left join hr_department as hr on hr.id = g.department_id
                                 left join survey_user_input_line as sqa on sqa.question_id = a.question_id and sqa.suggested_answer_id is null and sqa.write_uid = f.id
                                 where
-                                    c.state = 'done' and a.suggested_answer_id is not null and ss.periode = {}
+                                    c.state = 'done' and a.suggested_answer_id is not null and ss.periode = '"""+periode+"""'
                                 order by survey_id, d.company_id, question_id
-                    ) as sub""".format(periode)
+                    ) as sub"""
             http.request.env.cr.execute(query)
             fetched_data = http.request.env.cr.fetchall()
             column_names = [desc[0] for desc in http.request.env.cr.description]
