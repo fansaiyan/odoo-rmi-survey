@@ -2200,23 +2200,13 @@ class CustomAPIController(http.Controller):
     @http.route('/api/report/all-survey-data', website=False, auth='public', type="http", csrf=False,
                 methods=['GET'])
     def _all_survey_data(self, **kwargs):
-        survey_id = kwargs.get('survey_id', None)
         data = []
-        body = {}
-        statusCode = 200
         origin = http.request.httprequest.headers.get('Origin')
         headers = {
             'Content-Type': 'application/json',
             'Access-Control-Allow-Origin': origin,
             'Access-Control-Allow-Credentials': 'true'
         }
-        if not survey_id:
-            statusCode = 400
-            body = {
-                'status': False,
-                'message': 'Required parameter is missing'
-            }
-            return Response(json.dumps(body), headers=headers, status=statusCode)
         try:
             query = """
                       select
@@ -2265,8 +2255,7 @@ class CustomAPIController(http.Controller):
                                 where
                                     c.state = 'done' and a.suggested_answer_id is not null
                                 order by survey_id, d.company_id, question_id
-                    ) as sub
-                   """.format(survey_id)
+                    ) as sub"""
             http.request.env.cr.execute(query)
             fetched_data = http.request.env.cr.fetchall()
             column_names = [desc[0] for desc in http.request.env.cr.description]
