@@ -2200,7 +2200,7 @@ class CustomAPIController(http.Controller):
     @http.route('/api/report/all-survey-data', website=False, auth='public', type="http", csrf=False,
                 methods=['GET'])
     def _all_survey_data(self, **kwargs):
-        periode = kwargs.get('survey_id')
+        periode = kwargs.get('periode')
         data = []
         origin = http.request.httprequest.headers.get('Origin')
         headers = {
