@@ -2268,7 +2268,7 @@ class CustomAPIController(http.Controller):
                             AND level = %s
                             AND jenisindustri = %s
                             """
-            http.request.env.cr.execute(query, (tuple(parameter_name_list)), level, jenis_industri)
+            http.request.env.cr.execute(query, (tuple(parameter_name_list), level, jenis_industri))
             fetched_data = http.request.env.cr.fetchall()
             column_names = [desc[0] for desc in http.request.env.cr.description]
             for row in fetched_data:
