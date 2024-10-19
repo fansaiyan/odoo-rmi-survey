@@ -798,10 +798,10 @@ class CustomAPIController(http.Controller):
                                     left join survey_question_answer as e on e.id = a.suggested_answer_id
                                     left join res_users as f on f.partner_id = d.id
                                     left join hr_employee as g on g.user_id = f.id
-                                    left join res_company as h on h.id = g.company_id
                                     left join rmi_param_dimensi as i on i.id = b.dimensi_names
                                     left join rmi_param_group as j on j.id = b.sub_dimensi_names
                                     left join survey_survey as ss on ss.id = a.survey_id
+                                    left join res_company as h on h.id = ss.company_id
                                     left join hr_department as hr on hr.id = g.department_id
                                     left join survey_user_input_line as sqa on sqa.question_id = a.question_id and sqa.suggested_answer_id is null and sqa.write_uid = f.id
                                     where a.survey_id = {} and c.state = 'done' and a.suggested_answer_id is not null order by subdimensi_id
