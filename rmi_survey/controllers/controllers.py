@@ -2218,7 +2218,7 @@ class CustomAPIController(http.Controller):
                     *
                 from x_master_parameter
                 where
-                    parameter_name like '%"""+paramter_name+"""%'
+                    TRIM(parameter_name) = '"""+paramter_name+"""'
                     and level = """+level+"""
                     and jenisindustri = '"""+jenis_industri+"""'"""
             http.request.env.cr.execute(query)
