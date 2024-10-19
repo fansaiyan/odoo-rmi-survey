@@ -2265,7 +2265,6 @@ class CustomAPIController(http.Controller):
                     sub.*
                 from (
                       SELECT
-                            ROW_NUMBER() OVER () AS no,
                             *
                         FROM x_master_parameter
                         WHERE
