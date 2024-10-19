@@ -2264,11 +2264,11 @@ class CustomAPIController(http.Controller):
                             *
                         FROM x_master_parameter
                         WHERE
-                            TRIM(parameter_name) = ANY(%s)
+                            TRIM(parameter_name) IN %s
                             and level = """+level+"""
                             and jenisindustri = '"""+jenis_industri+"""'
                             """
-            http.request.env.cr.execute(query, (parameter_name_list))
+            http.request.env.cr.execute(query, (tuple(parameter_name_list)))
             fetched_data = http.request.env.cr.fetchall()
             column_names = [desc[0] for desc in http.request.env.cr.description]
             for row in fetched_data:
