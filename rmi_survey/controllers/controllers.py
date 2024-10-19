@@ -2260,6 +2260,10 @@ class CustomAPIController(http.Controller):
             parameter_name_list = parameter_name.split(':')
             level_list = level.split(',')
             query = """
+            select
+                    ROW_NUMBER() OVER () AS no,
+                    sub.*
+                from (
                       SELECT
                             ROW_NUMBER() OVER () AS no,
                             *
@@ -2268,6 +2272,8 @@ class CustomAPIController(http.Controller):
                             TRIM(parameter_name) IN %s
                             AND level IN %s
                             AND jenisindustri = %s
+                        order by dimensi_id, id, parameter_no
+                    ) as sub
                             """
             http.request.env.cr.execute(query, (tuple(parameter_name_list), tuple(level_list), jenis_industri))
             fetched_data = http.request.env.cr.fetchall()
