@@ -1269,7 +1269,7 @@ class CustomAPIController(http.Controller):
                         where a.survey_id = """+survey_id+""" and c.state = 'done' and a.suggested_answer_id is not null
                         and i.id = 1
                         and ss.periode = '"""+periode+"""'
-                        GROUP BY a.question_id, i.name, j.name, a.survey_id, j.id, i.id, ss.title, h.name, ss.id
+                        GROUP BY a.question_id, i.name, j.name, a.survey_id, j.id, i.id, ss.title, h.name, ss.id, b.title
                         ORDER BY a.question_id ASC
                     ) AS subq
                     GROUP BY subq.survey_name, subq.jenis_industri, subq.survey_key
@@ -1443,7 +1443,7 @@ class CustomAPIController(http.Controller):
                             where a.survey_id = """+survey_id+""" and c.state = 'done' and a.suggested_answer_id is not null
                             and i.id = 2
                             and ss.periode = '"""+periode+"""'
-                            GROUP BY a.question_id, i.name, j.name, a.survey_id, j.id, i.id, ss.title, h.name, ss.id
+                            GROUP BY a.question_id, i.name, j.name, a.survey_id, j.id, i.id, ss.title, h.name, ss.id, b.title
                             ORDER BY a.question_id ASC
                         ) AS subq
                         GROUP BY subq.survey_name, subq.jenis_industri, subq.survey_key
@@ -1654,7 +1654,7 @@ class CustomAPIController(http.Controller):
                                 where a.survey_id = """+survey_id+""" and c.state = 'done' and a.suggested_answer_id is not null
                                 and i.id = 3
                                 and ss.periode = '"""+periode+"""'
-                                GROUP BY a.question_id, i.name, j.name, a.survey_id, j.id, i.id, ss.title, h.name, ss.id
+                                GROUP BY a.question_id, i.name, j.name, a.survey_id, j.id, i.id, ss.title, h.name, ss.id, b.title
                                 ORDER BY a.question_id ASC
                             ) AS subq
                             GROUP BY subq.survey_name, subq.jenis_industri, subq.survey_key
@@ -1852,7 +1852,7 @@ class CustomAPIController(http.Controller):
                             where a.survey_id = """+survey_id+""" and c.state = 'done' and a.suggested_answer_id is not null
                             and i.id = 4
                             and ss.periode = '"""+periode+"""'
-                            GROUP BY a.question_id, i.name, j.name, a.survey_id, j.id, i.id, ss.title, h.name, ss.id
+                            GROUP BY a.question_id, i.name, j.name, a.survey_id, j.id, i.id, ss.title, h.name, ss.id, b.title
                             ORDER BY a.question_id ASC
                         ) AS subq
                         GROUP BY subq.survey_name, subq.jenis_industri, subq.survey_key
@@ -2024,7 +2024,7 @@ class CustomAPIController(http.Controller):
                             where a.survey_id = """+survey_id+""" and c.state = 'done' and a.suggested_answer_id is not null
                             and i.id = 5
                             and ss.periode = '"""+periode+"""'
-                            GROUP BY a.question_id, i.name, j.name, a.survey_id, j.id, i.id, ss.title, h.name, ss.id
+                            GROUP BY a.question_id, i.name, j.name, a.survey_id, j.id, i.id, ss.title, h.name, ss.id, b.title
                             ORDER BY a.question_id ASC
                         ) AS subq
                         GROUP BY subq.survey_name, subq.jenis_industri, subq.survey_key
