@@ -2257,14 +2257,13 @@ class CustomAPIController(http.Controller):
             'Access-Control-Allow-Credentials': 'true'
         }
         try:
-            parameter_name_list = parameter_name.split(',') if isinstance(parameter_name, str) else parameter_name
             query = """
                       SELECT
                             ROW_NUMBER() OVER () AS no,
                             *
                         FROM x_master_parameter
                         WHERE
-                            TRIM(parameter_name) = ANY("""+parameter_name_list+""")
+                            TRIM(parameter_name) = ANY("""+parameter_name+""")
                             and level = """+level+"""
                             and jenisindustri = '"""+jenis_industri+"""'
                             """
