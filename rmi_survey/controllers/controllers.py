@@ -2242,6 +2242,53 @@ class CustomAPIController(http.Controller):
             statusCode = 500
         return Response(json.dumps(body), headers=headers, status=statusCode)
 
+    @http.route('/api/report/ofi-detail-batch', website=False, auth='public', type="http", csrf=False, methods=['GET'])
+    def _ofi_detail_batch(self, **kwargs):
+        parameter_name = kwargs.get('parameter_name')
+        level = kwargs.get('level')
+        jenis_industri = kwargs.get('jenis_industri')
+        data = []
+        body = {}
+        statusCode = 200
+        origin = http.request.httprequest.headers.get('Origin')
+        headers = {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': origin,
+            'Access-Control-Allow-Credentials': 'true'
+        }
+        try:
+            parameter_name_list = parameter_name.split(',') if isinstance(parameter_name, str) else parameter_name
+            query = """
+                      SELECT
+                            ROW_NUMBER() OVER () AS no,
+                            *
+                        FROM x_master_parameter
+                        WHERE
+                            TRIM(parameter_name) = ANY("""+parameter_name_list+""")
+                            and level = """+level+"""
+                            and jenisindustri = '"""+jenis_industri+"""'
+                            """
+            http.request.env.cr.execute(query)
+            fetched_data = http.request.env.cr.fetchall()
+            column_names = [desc[0] for desc in http.request.env.cr.description]
+            for row in fetched_data:
+                row_dict = dict(zip(column_names, row))
+                for key, value in row_dict.items():
+                    if isinstance(value, datetime):
+                        row_dict[key] = str(value)
+                data.append(row_dict)
+            body = {'status': True, 'message': 'OK', 'data': data}
+            statusCode = 200
+        except Exception as e:
+            errorMsg = f"An error occurred: {e}"
+            body = {
+                'status': False,
+                'message': errorMsg,
+                'execution_time': '0s'
+            }
+            statusCode = 500
+        return Response(json.dumps(body), headers=headers, status=statusCode)
+
     @http.route('/api/report/all-survey-data', website=False, auth='public', type="http", csrf=False,
                 methods=['GET'])
     def _all_survey_data(self, **kwargs):
