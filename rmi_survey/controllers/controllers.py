@@ -2257,7 +2257,7 @@ class CustomAPIController(http.Controller):
             'Access-Control-Allow-Credentials': 'true'
         }
         try:
-            parameter_name_list = parameter_name.split(',')
+            parameter_name_list = parameter_name.split(':')
             level_list = level.split(',')
             query = """
                       SELECT
@@ -2269,7 +2269,7 @@ class CustomAPIController(http.Controller):
                             AND level IN %s
                             AND jenisindustri = %s
                             """
-            http.request.env.cr.execute(query, (tuple(parameter_name_list), tuple(level), jenis_industri))
+            http.request.env.cr.execute(query, (tuple(parameter_name_list), tuple(level_list), jenis_industri))
             fetched_data = http.request.env.cr.fetchall()
             column_names = [desc[0] for desc in http.request.env.cr.description]
             for row in fetched_data:
