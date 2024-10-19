@@ -2257,18 +2257,18 @@ class CustomAPIController(http.Controller):
             'Access-Control-Allow-Credentials': 'true'
         }
         try:
-            parameter_name_list = parameter_name.split(',') if isinstance(parameter_name, str) else parameter_name
+            parameter_name_list = parameter_name.split(',')
             query = """
                       SELECT
                             ROW_NUMBER() OVER () AS no,
                             *
                         FROM x_master_parameter
                         WHERE
-                            TRIM(parameter_name) = ANY("""+parameter_name_list+""")
+                            TRIM(parameter_name) = ANY(%s)
                             and level = """+level+"""
                             and jenisindustri = '"""+jenis_industri+"""'
                             """
-            http.request.env.cr.execute(query)
+            http.request.env.cr.execute(query, (parameter_name_list))
             fetched_data = http.request.env.cr.fetchall()
             column_names = [desc[0] for desc in http.request.env.cr.description]
             for row in fetched_data:
