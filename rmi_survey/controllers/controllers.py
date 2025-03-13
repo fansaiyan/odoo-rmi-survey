@@ -8,7 +8,10 @@ class CustomAPIController(http.Controller):
     @http.route('/web/session/authenticate', type='json', auth="none", cors="*")
     def authenticate(self, db, login, password, base_location=None):
         request.session.authenticate(db, login, password)
-        return request.env['ir.http'].session_info()
+        session_info = request.env['ir.http'].session_info()
+        # Hapus kunci 'db' dari response
+        session_info.pop("db", None)
+        return session_info
 
     @http.route('/api/parameter-dimensi', website=False, auth='public', type="http", csrf=False, methods=['GET'])
     def _get_parameter_dimensi(self, **kwargs):
