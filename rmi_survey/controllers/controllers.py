@@ -11,6 +11,13 @@ class CustomAPIController(http.Controller):
         session_info = request.env['ir.http'].session_info()
         # Hapus kunci 'db' dari response
         session_info.pop("db", None)
+
+        # Ambil user dan groupnya
+        user = request.env.user
+        user_groups = user.groups_id.mapped("name")
+
+        # Tambahkan data groups ke response
+        session_info["user_groups"] = user_groups
         return session_info
 
     @http.route('/api/parameter-dimensi', website=False, auth='public', type="http", csrf=False, methods=['GET'])
