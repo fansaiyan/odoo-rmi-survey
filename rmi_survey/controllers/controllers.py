@@ -2396,3 +2396,37 @@ class CustomAPIController(http.Controller):
             }
             statusCode = 500
         return Response(json.dumps(body), headers=headers, status=statusCode)
+
+    @http.route('/api/company_user_email', website=False, auth='public', type="http", csrf=False, methods=['GET'])
+    def _get_company_user_email(self, **kwargs):
+        data = []
+        query = """
+                    SELECT
+                        res_company.id AS company_id,
+                        res_company.name AS company_name,
+                        res_users.id AS user_id,
+                        res_users.login AS user_login,
+                        res_partner.email AS user_email
+                    FROM res_company
+                    LEFT JOIN res_users ON res_users.company_id = res_company.id
+                    LEFT JOIN res_partner ON res_users.partner_id = res_partner.id
+                    where res_users.id is not null and res_partner.email is not null
+                    ORDER BY res_company.id, res_users.id
+                """
+        http.request.env.cr.execute(query)
+        fetched_data = http.request.env.cr.fetchall()
+        column_names = [desc[0] for desc in http.request.env.cr.description]
+        for row in fetched_data:
+            row_dict = dict(zip(column_names, row))
+            for key, value in row_dict.items():
+                if isinstance(value, datetime):
+                    row_dict[key] = str(value)
+            data.append(row_dict)
+        origin = http.request.httprequest.headers.get('Origin')
+        headers = {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': origin,
+            'Access-Control-Allow-Credentials': 'true'
+        }
+        body = {'status': 200, 'message': 'OK', 'data': data}
+        return Response(json.dumps(body), headers=headers)
