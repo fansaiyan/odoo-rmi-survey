@@ -2406,7 +2406,8 @@ class CustomAPIController(http.Controller):
                         res_company.name AS company_name,
                         res_users.id AS user_id,
                         res_users.login AS user_login,
-                        res_partner.email AS user_email
+                        res_partner.email AS user_email,
+                        res_partner.name AS user_name
                     FROM res_company
                     LEFT JOIN res_users ON res_users.company_id = res_company.id
                     LEFT JOIN res_partner ON res_users.partner_id = res_partner.id
