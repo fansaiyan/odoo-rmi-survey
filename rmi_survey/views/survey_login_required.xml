@@ -1,0 +1,12 @@
+<odoo>
+    <template id="survey_auth_required_inherit_rmi" inherit_id="survey.survey_auth_required">
+      <xpath expr="//div[contains(@class, 'jumbotron')]" position="replace">
+          <div class="jumbotron mt32">
+                <h1>Login required</h1>
+                <p>This survey is open only to registered people. Please
+                    <a t-att-href="'/web/login?redirect=' + request.httprequest.url">log in</a>.
+                </p>
+            </div>
+      </xpath>
+    </template>
+</odoo>

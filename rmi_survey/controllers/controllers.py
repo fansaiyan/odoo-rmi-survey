@@ -2431,3 +2431,80 @@ class CustomAPIController(http.Controller):
         }
         body = {'status': 200, 'message': 'OK', 'data': data}
         return Response(json.dumps(body), headers=headers)
+
+    @http.route('/api/survey-get-link', website=False, auth='public', type="http", csrf=False, methods=['GET'])
+    def _get_surveys(self, **kwargs):
+        partner_id = kwargs.get('partner_id')
+        company_id = kwargs.get('company_id')
+        origin = http.request.httprequest.headers.get('Origin')
+        headers = {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': origin,
+            'Access-Control-Allow-Credentials': 'true'
+        }
+        if not partner_id:
+            statusCode = 400
+            body = {
+                'status': False,
+                'message': 'Required parameter "partner_id" is missing'
+            }
+            return Response(json.dumps(body), headers=headers, status=statusCode)
+        if not company_id:
+            statusCode = 400
+            body = {
+                'status': False,
+                'message': 'Required parameter "company_id" is missing'
+            }
+            return Response(json.dumps(body), headers=headers, status=statusCode)
+        data = []
+        query = """
+                select
+                    a.id as survey_user_input_id,
+                    (d.title->>'en_US')::varchar as survey_name,
+                    d.access_token as survey_token,
+                    a.access_token as answer_token,
+                    a.state,
+                    INITCAP(REPLACE(a.state, '_', ' ')) AS state_text,
+                    'start_input' as status,
+                    e.name as company_name,
+                    f.name as partner_name
+                    from survey_user_input as a
+                left join survey_user_input_line as b on b.user_input_id = a.id
+                left join survey_question as c on c.id = b.question_id
+                left join survey_survey as d on d.id = a.survey_id
+                left join res_company as e on e.id = d.company_id
+                left join res_partner as f on f.id = a.partner_id
+                where e.id = %s and f.id = %s
+                order by a.id desc limit 1
+                """
+        http.request.env.cr.execute(query, (company_id, partner_id))
+        fetched_data = http.request.env.cr.fetchall()
+        column_names = [desc[0] for desc in http.request.env.cr.description]
+        # Jika query pertama mengembalikan hasil, format data
+        if fetched_data:
+            for row in fetched_data:
+                row_dict = dict(zip(column_names, row))
+                for key, value in row_dict.items():
+                    if isinstance(value, datetime):
+                        row_dict[key] = str(value)
+                data.append(row_dict)
+        else:
+            # Jika tidak ada hasil, jalankan query kedua
+            query2 = """
+                     SELECT
+                        (a.title->>'en_US')::varchar as survey_name,
+                        a.access_token as survey_token,
+                        'not_yet' AS status
+                       FROM survey_survey as a
+                    left join res_company as b on b.id = a.company_id
+                    where b.id = %s order by b.id desc limit 1
+                     """
+            request.env.cr.execute(query2, (company_id,))
+            fetched_data = request.env.cr.fetchall()
+            column_names = [desc[0] for desc in request.env.cr.description]
+
+            for row in fetched_data:
+                row_dict = dict(zip(column_names, row))
+                data.append(row_dict)
+        body = {'status': 200, 'message': 'OK', 'data': data}
+        return Response(json.dumps(body), headers=headers)

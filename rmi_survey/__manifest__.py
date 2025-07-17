@@ -43,6 +43,7 @@
         'reports/report_rekomendasi.xml',
         'reports/report_rmi.xml',
         'views/interest_coverage_ratio.xml',
+        'views/survey_login_required.xml'
     ],
 
     'assets': {
