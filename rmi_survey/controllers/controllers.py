@@ -2508,3 +2508,244 @@ class CustomAPIController(http.Controller):
                 data.append(row_dict)
         body = {'status': 200, 'message': 'OK', 'data': data}
         return Response(json.dumps(body), headers=headers)
+
+    @http.route(
+        '/api/calculate_final_rating',
+        website=False,
+        auth='public',
+        type='http',
+        csrf=False,
+        methods=['POST'],
+        cors="*"
+    )
+    def post_calculate_final_rating(self, **kwargs):
+        body = io.BytesIO(request.httprequest.data)
+        payload = json.load(body)
+
+        zscore = payload.get('z-score')
+        icr = payload.get('icr')
+
+        headers = {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Credentials': 'true'
+        }
+
+        result_z_score = None
+        result_icr = None
+        skor_rating_altman = 0
+        skor_rating_icr = 0
+        final_rating = None
+        final_rating_icr = None
+
+        try:
+            # ================================================
+            # PROCESS Z-SCORE
+            # ================================================
+            if zscore:
+                company_type = zscore['company_type']
+                wc = zscore['wc']
+                re = zscore['re']
+                ebit = zscore['ebit']
+                mve = zscore['mve']
+                bve = zscore['bve']
+                ts = zscore['ts']
+                ta = zscore['ta']
+                tl = zscore['tl']
+
+                if ta == 0 or tl == 0:
+                    raise ValueError("TA atau TL tidak boleh 0")
+
+                A = wc / ta
+                B = re / ta
+                C = ebit / ta
+                D = mve / tl
+                D_prime = bve / tl
+                E = ts / ta
+
+                Z = 0
+                if company_type == 1:
+                    Z = (1.2 * A) + (1.4 * B) + (3.3 * C) + (0.6 * D) + E
+                elif company_type == 2:
+                    Z = (0.717 * A) + (0.847 * B) + (3.107 * C) + (0.42 * D_prime) + (0.998 * E)
+                elif company_type == 3:
+                    Z = (6.56 * A) + (3.26 * B) + (6.72 * C) + (1.05 * D_prime)
+                else:
+                    raise ValueError("company_type harus 1, 2, atau 3")
+
+                def get_rating1(z):
+                    if z > 3:
+                        return "AAA"
+                    elif z > 2.7:
+                        return "AA"
+                    elif z > 2.5:
+                        return "A"
+                    elif z > 2:
+                        return "BBB"
+                    elif z > 1.8:
+                        return "BB"
+                    elif z > 1.5:
+                        return "B"
+                    elif z > 1.2:
+                        return "CCC"
+                    elif z > 1:
+                        return "CC"
+                    elif z > 0.5:
+                        return "C"
+                    else:
+                        return "D"
+
+                def get_rating2(z):
+                    if z > 2.9:
+                        return "AAA"
+                    elif z > 2.7:
+                        return "AA"
+                    elif z > 2.4:
+                        return "A"
+                    elif z > 2:
+                        return "BBB"
+                    elif z > 1.8:
+                        return "BB"
+                    elif z > 1.5:
+                        return "B"
+                    elif z > 1.2:
+                        return "CCC"
+                    elif z > 1:
+                        return "CC"
+                    elif z > 0.5:
+                        return "C"
+                    else:
+                        return "D"
+
+                def get_rating3(z):
+                    if z > 2.6:
+                        return "AAA"
+                    elif z > 2.4:
+                        return "AA"
+                    elif z > 2.2:
+                        return "A"
+                    elif z > 1.8:
+                        return "BBB"
+                    elif z > 1.5:
+                        return "BB"
+                    elif z > 1.3:
+                        return "B"
+                    elif z > 1.1:
+                        return "CCC"
+                    elif z > 0.9:
+                        return "CC"
+                    elif z > 0.5:
+                        return "C"
+                    else:
+                        return "D"
+
+                rating1 = get_rating1(Z)
+                rating2 = get_rating2(Z)
+                rating3 = get_rating3(Z)
+
+                if company_type == 1:
+                    final_rating = rating1
+                elif company_type == 2:
+                    final_rating = rating2
+                else:
+                    final_rating = rating3
+
+                # Lookup skor Z-Score dari rmi_final_rating
+                query = "SELECT nilai FROM rmi_final_rating WHERE name = %s LIMIT 1"
+                request.env.cr.execute(query, (final_rating,))
+                row = request.env.cr.fetchone()
+                skor_rating_altman = row[0] if row else 0
+
+                result_z_score = {
+                    'A': A,
+                    'B': B,
+                    'C': C,
+                    'D': D,
+                    "D'": D_prime,
+                    'E': E,
+                    'Z': Z,
+                    'Rating1': rating1,
+                    'Rating2': rating2,
+                    'Rating3': rating3,
+                    'FinalRating': final_rating,
+                    'SkorRatingAltman': skor_rating_altman
+                }
+
+            # ================================================
+            # PROCESS ICR
+            # ================================================
+            if icr:
+                rate = icr.get('rate')
+                if rate is not None:
+                    query_icr = """
+                                SELECT name
+                                FROM rmi_icr
+                                WHERE %s BETWEEN min AND max LIMIT 1
+                                """
+                    request.env.cr.execute(query_icr, (rate,))
+                    icr_row = request.env.cr.fetchone()
+                    final_rating_icr = icr_row[0] if icr_row else None
+
+                    if final_rating_icr:
+                        query_icr_skor = """
+                                         SELECT nilai
+                                         FROM rmi_final_rating
+                                         WHERE name = %s LIMIT 1
+                                         """
+                        request.env.cr.execute(query_icr_skor, (final_rating_icr,))
+                        icr_skor_row = request.env.cr.fetchone()
+                        skor_rating_icr = icr_skor_row[0] if icr_skor_row else 0
+
+                    result_icr = {
+                        'Rate': rate,
+                        'FinalRatingICR': final_rating_icr,
+                        'SkorRatingICR': skor_rating_icr
+                    }
+
+            # ================================================
+            # FINAL RESULT: BANDINKAN
+            # ================================================
+            final_result = {}
+
+            if result_z_score and result_icr:
+                if skor_rating_altman >= skor_rating_icr:
+                    chosen_rating = final_rating
+                else:
+                    chosen_rating = final_rating_icr
+            elif result_z_score:
+                chosen_rating = final_rating
+            elif result_icr:
+                chosen_rating = final_rating_icr
+            else:
+                raise ValueError("Minimal z-score atau icr harus diisi.")
+
+            # Query final result detail dari rmi_final_rating
+            query_final_result = "SELECT * FROM rmi_final_rating WHERE name = %s LIMIT 1"
+            request.env.cr.execute(query_final_result, (chosen_rating,))
+            row = request.env.cr.fetchone()
+            if row:
+                column_names = [desc[0] for desc in request.env.cr.description]
+                final_result = dict(zip(column_names, row))
+
+                # Fix: convert datetime to string
+                for key, value in final_result.items():
+                    if isinstance(value, datetime):
+                        final_result[key] = value.isoformat()
+
+            result = {
+                'status': 200,
+                'message': 'OK',
+                'data': {
+                    'result_z_score': result_z_score,
+                    'result_icr': result_icr,
+                    'final_result': final_result
+                }
+            }
+
+        except Exception as e:
+            result = {
+                'status': 500,
+                'message': f'An error occurred: {e}',
+                'execution_time': '0s'
+            }
+
+        return Response(json.dumps(result), headers=headers)
